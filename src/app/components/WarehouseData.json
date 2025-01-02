@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Laptop",
+    "quantity": 15,
+    "location": "Lager A"
+  },
+  {
+    "id": 2,
+    "name": "Maus",
+    "quantity": 30,
+    "location": "Lager B"
+  },
+  {
+    "id": 3,
+    "name": "Tastatur",
+    "quantity": 20,
+    "location": "Lager C"
+  }
+]
