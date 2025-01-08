@@ -9,7 +9,7 @@
     transition: width 0.3s ease;
     position: fixed;
     padding: 20px; /*Add padding inside the sidebar */
-    box-sizing: border-box; /*Ensure padding is considered in dimensions*/
+    box-sizing: border-box;
 }
 
 .sidebar.collapsed {

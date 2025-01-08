@@ -4,7 +4,7 @@
     align-items: center; /* Center the grid vertically */
     height: 100vh;
     box-sizing: border-box;
-    padding: 20px; /* Reduce excessive padding */
+    padding: 20px;
 }
 
 .grid {
