@@ -1,0 +1,17 @@
+.top-bar {
+    height: 50px;
+    background-color: #E2D3C6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.top-bar .search {
+    flex: 1;
+    margin-right: 200px;
+    margin-left: 200px;
+    padding: 5px 10px;
+    border-radius: 30px;
+    border: 0.5px solid black;
+}

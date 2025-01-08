@@ -3,7 +3,7 @@
 import React from 'react';
 import { FaUser, FaMapMarkerAlt, FaChartBar, FaCog } from 'react-icons/fa';
 import Link from 'next/link';
-import './sidebar.css';
+import './sidebar.css'
 
 
 const Sidebar: React.FC = () => {

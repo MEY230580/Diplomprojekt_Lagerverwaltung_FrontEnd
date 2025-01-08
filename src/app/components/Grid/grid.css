@@ -1,0 +1,33 @@
+.container {
+    display: flex;
+    justify-content: center; /* Center the grid horizontally */
+    align-items: center; /* Center the grid vertically */
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 20px; /* Reduce excessive padding */
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Flexible columns */
+    gap: 30px; /* Space between items */
+    width: 50%; /* Increase the width to allow space for items to sit side by side */
+    max-width: 1200px; /* Optional: Limit the grid width */
+    margin: auto; /* Center the grid in the container */
+}
+
+.item {
+    border: 1px solid black;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #D67A69;
+    text-align: center; /* Center-align text (optional) */
+}
+
+.item h3 {
+    margin: 0 0 10px 0;
+}
+
+.item p {
+    margin: 5px 0;
+}
