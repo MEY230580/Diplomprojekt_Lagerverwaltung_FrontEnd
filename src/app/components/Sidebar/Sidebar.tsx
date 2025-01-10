@@ -28,7 +28,7 @@ const Sidebar: React.FC = () => {
             <Link href="/src/app/Location" className="link">
                 <div className="menuItem">
                     <FaMapMarkerAlt className="icon" />
-                    {!isCollapsed && <span className="text">Location</span>}
+                    {!isCollapsed && <span className="text">Page</span>}
                 </div>
             </Link>
             <Link href="/analysis" className="link">

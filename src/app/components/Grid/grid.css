@@ -1,7 +1,7 @@
 .container {
     display: flex;
-    justify-content: center; /* Center the grid horizontally */
-    align-items: center; /* Center the grid vertically */
+    justify-content: center;
+    align-items: center;
     height: 100vh;
     box-sizing: border-box;
     padding: 20px;
@@ -9,11 +9,11 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Flexible columns */
-    gap: 30px; /* Space between items */
-    width: 50%; /* Increase the width to allow space for items to sit side by side */
-    max-width: 1200px; /* Optional: Limit the grid width */
-    margin: auto; /* Center the grid in the container */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 30px;
+    width: 50%;
+    max-width: 1200px;
+    margin: auto;
 }
 
 .item {
@@ -21,7 +21,7 @@
     border-radius: 8px;
     padding: 20px;
     background-color: #D67A69;
-    text-align: center; /* Center-align text (optional) */
+    text-align: center;
 }
 
 .item h3 {
