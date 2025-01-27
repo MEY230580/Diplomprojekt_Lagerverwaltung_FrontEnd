@@ -6,7 +6,7 @@ import Link from 'next/link';
 import './sidebar.css'
 
 
-const Sidebar: React.FC = () => {
+export default function Sidebar() {
     const  [isCollapsed, setIsCollapsed] = React.useState(false);
 
     const toggleSidebar = () => {
@@ -19,13 +19,13 @@ const Sidebar: React.FC = () => {
                 {isCollapsed ? '>>' : '<<'}
             </button>
             <div className="menu">
-            <Link href="/src/app/Profile" className="link">
+            <Link href="/profile" className="link">
                 <div className="menuItem">
                     <FaUser className="icon" />
                     {!isCollapsed && <span className="text">User</span>}
                 </div>
             </Link>
-            <Link href="/src/app/Location" className="link">
+            <Link href="/location" className="link">
                 <div className="menuItem">
                     <FaMapMarkerAlt className="icon" />
                     {!isCollapsed && <span className="text">Page</span>}
@@ -46,6 +46,4 @@ const Sidebar: React.FC = () => {
         </div>
         </div>
     );
-};
-
-export default Sidebar;
+}
