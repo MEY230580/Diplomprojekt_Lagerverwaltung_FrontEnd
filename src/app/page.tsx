@@ -4,7 +4,7 @@ import TopBar from "./components/TopBar/TopBar";
 import Grid from "./components/Grid/Grid";
 
 
-const Home: React.FC = () => {
+export default function Home() {
   return (
       <div>
         <Sidebar />
@@ -12,5 +12,4 @@ const Home: React.FC = () => {
         <Grid />
       </div>
   );
-};
-export default Home;
+}
