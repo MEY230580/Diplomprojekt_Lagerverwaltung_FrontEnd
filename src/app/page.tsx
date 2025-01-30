@@ -1,7 +1,8 @@
 import * as React from 'react';
 import Sidebar  from "./components/Sidebar/Sidebar";
 import TopBar from "./components/TopBar/TopBar";
-import Grid from "./components/Grid/Grid";
+import ArticleList from "./components/articleList";
+//import Grid from "./components/Grid/Grid";
 
 
 export default function Home() {
@@ -9,7 +10,7 @@ export default function Home() {
       <div>
         <Sidebar />
         <TopBar />
-        <Grid />
+        <ArticleList />
       </div>
   );
 }

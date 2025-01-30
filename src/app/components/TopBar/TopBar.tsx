@@ -14,7 +14,7 @@ export default function TopBar()  {
         //TODO -> API von BackEnd einfügen, um handleSearch auch funktionstüchtig zu machen.
     }
     return (
-        <div style = {{ display: 'flex', justifyContent: 'end',alignItems: 'start' }}>
+        <div className="flex justify-end items-start m-4">
             <form onSubmit = {handleSearch}>
                 <FormControl sx={{ width: { xs: '100%', md: '25ch' } }} variant="outlined">
                     <OutlinedInput
