@@ -1,16 +1,8 @@
 "use client";
-import * as React from 'react';
 import { useEffect, useState } from "react";
+import * as React from "react";
 
-interface Warehouse {
-    id: number;
-    name: string;
-    location: string;
-    products: string[];
-}
-
-export default function Page(){
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+export default function AuditLogs() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -18,7 +10,6 @@ export default function Page(){
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
-                setWarehouses(data.$values);
             })
             .catch((error) => {
                 console.error("Error retrieving data:", error);
@@ -28,16 +19,7 @@ export default function Page(){
 
     return (
         <div>
-            <h1 className="flex items-center justify-center  text-lg  font-bold">Location</h1>
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
-            <ul>
-                {warehouses.map((warehouse) => (
-                    <li key={warehouse.id}>
-                        <strong>{warehouse.name}</strong>
-                        <strong>{warehouse.id}</strong>
-                    </li>
-                ))}
-            </ul>
         </div>
     );
 }

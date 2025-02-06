@@ -1,3 +1,4 @@
+"use client";
 import { LockOutlined } from "@mui/icons-material";
 import {
     Container,
@@ -10,17 +11,17 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-export default function SignInPage() {
+export default function Page() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("API MUSS NOCH ERSTELLT + VERBUNDEN WERDEN!")
+        fetch("http://localhost:5001/api/auth/login")
         .then((response) => response.json())
         .then((data) => {
             console.log("API Response:", data);
-            setUsername(data)
+            setUsername(data.$values);
         })
             .catch((error) => {
                 console.error("Error retrieving data:", error);
@@ -28,7 +29,7 @@ export default function SignInPage() {
             });
     }, []);
 
-    const handleSignIn = () => {
+    const handleLogIn = () => {
         if (!username) {
             console.log("Wrong Username!");
         }
@@ -86,7 +87,7 @@ export default function SignInPage() {
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
-                            onClick={handleSignIn}
+                            onClick={handleLogIn}
                         >
                             Login
                         </Button>

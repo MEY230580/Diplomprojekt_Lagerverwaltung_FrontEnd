@@ -1,23 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 
-interface Warehouse {
-    id: number;
-    name: string;
-    location: string;
-    products: string[];
+interface Restock {
+    productId: number;
+    quantity: number;
 }
 
-export default function PostWarehouses() {
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+export default function GetRestocks() {
+    const [restocks, setRestocks] = useState<Restock[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/Warehouse")
+        fetch("http://localhost:5001/api/restock/request")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data); // Debugging
-                setWarehouses(data.$values); // <-- Hier wird das Array extrahiert
+                setRestocks(data.$values); // <-- Hier wird das Array extrahiert
             })
             .catch((error) => {
                 console.error("Error retrieving data:", error);
@@ -30,9 +28,9 @@ export default function PostWarehouses() {
             <h2 className="flex items-center justify-center  text-lg  font-bold">Article-List</h2>
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
             <ul>
-                {warehouses.map((warehouse) => (
-                    <li key={warehouse.id}>
-                        <strong>{warehouse.name}</strong>
+                {restocks.map((restock) => (
+                    <li key={restock.productId}>
+                        {restock.quantity} 
                     </li>
                 ))}
             </ul>
