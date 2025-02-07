@@ -31,8 +31,9 @@ export default function PostMovements() {
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
             <ul>
                 {movements.map((movement) => (
-                    <li key={movement.id}>
+                    <li className="flex items-center justify-center" key={movement.id}>
                         <strong>{movement.name}</strong>
+                        <strong>{movement.id}</strong>
                     </li>
                 ))}
             </ul>

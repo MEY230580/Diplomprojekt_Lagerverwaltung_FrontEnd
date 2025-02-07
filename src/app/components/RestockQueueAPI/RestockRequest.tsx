@@ -29,8 +29,9 @@ export default function GetRestocks() {
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
             <ul>
                 {restocks.map((restock) => (
-                    <li key={restock.productId}>
-                        {restock.quantity} 
+                    <li className="flex items-center justify-center" key={restock.productId}>
+                        {restock.quantity}
+                        {restock.productId}
                     </li>
                 ))}
             </ul>

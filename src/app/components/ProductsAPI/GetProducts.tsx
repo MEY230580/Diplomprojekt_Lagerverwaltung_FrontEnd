@@ -32,8 +32,9 @@ export default function GetProducts() {
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
             <ul>
                 {products.map((product) => (
-                    <li key={product.id}>
+                    <li className="flex items-center justify-center" key={product.id}>
                         <strong>{product.name}</strong> - {product.quantity} Pieces (Warehouse: {product.location})
+                        <strong>{product.id}</strong>
                     </li>
                 ))}
             </ul>

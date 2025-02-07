@@ -32,7 +32,7 @@ export default function Page(){
             {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
             <ul>
                 {warehouses.map((warehouse) => (
-                    <li key={warehouse.id}>
+                    <li className="flex items-center justify-center"key={warehouse.id}>
                         <strong>{warehouse.name}</strong>
                         <strong>{warehouse.id}</strong>
                     </li>
