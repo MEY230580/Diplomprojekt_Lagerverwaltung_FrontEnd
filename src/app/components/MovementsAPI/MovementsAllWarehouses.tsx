@@ -13,7 +13,7 @@ export default function PostMovements() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/Movements/all-warehouses")
+        fetch("http://localhost:5100/api/Movements/all-warehouses")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data); // Debugging
@@ -33,7 +33,6 @@ export default function PostMovements() {
                 {movements.map((movement) => (
                     <li className="flex items-center justify-center" key={movement.id}>
                         <strong>{movement.name}</strong>
-                        <strong>{movement.id}</strong>
                     </li>
                 ))}
             </ul>

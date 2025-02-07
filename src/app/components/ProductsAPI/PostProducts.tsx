@@ -15,7 +15,7 @@ export default function PostProducts() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/Products")
+        fetch("http://localhost:5100/api/Products")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data); // Debugging

@@ -6,7 +6,7 @@ export default function GetMovements() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("ToDo, gets Error message!")
+        fetch("http://localhost:5001/api/Warehouse/b71c01f5-2d18-4474-8933-9ac3ac62857d")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);

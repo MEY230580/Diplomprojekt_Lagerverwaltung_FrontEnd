@@ -11,7 +11,7 @@ export default function Page() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch("")
+        fetch("http://localhost:5100/api/auth/register")
         .then(res => res.json())
         .then((data) => {
             console.log("API Ressponse:", data);

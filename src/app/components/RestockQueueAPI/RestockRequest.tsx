@@ -11,7 +11,7 @@ export default function GetRestocks() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/restock/request")
+        fetch("http://localhost:5100/api/restock/request")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data); // Debugging
@@ -31,7 +31,6 @@ export default function GetRestocks() {
                 {restocks.map((restock) => (
                     <li className="flex items-center justify-center" key={restock.productId}>
                         {restock.quantity}
-                        {restock.productId}
                     </li>
                 ))}
             </ul>

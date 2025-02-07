@@ -6,7 +6,7 @@ export default function AuditLogs() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/Warehouse")
+        fetch("http://localhost:5100/api/Warehouse")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);

@@ -1,14 +1,6 @@
 "use client";
 import { LockOutlined } from "@mui/icons-material";
-import {
-    Container,
-    CssBaseline,
-    Box,
-    Avatar,
-    Typography,
-    TextField,
-    Button,
-} from "@mui/material";
+import { Container, CssBaseline, Box, Avatar, Typography, TextField, Button, } from "@mui/material";
 import { useEffect, useState } from "react";
 
 export default function Page() {
@@ -17,7 +9,7 @@ export default function Page() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/auth/login")
+        fetch("http://localhost:5100/api/auth/login")
         .then((response) => response.json())
         .then((data) => {
             console.log("API Response:", data);

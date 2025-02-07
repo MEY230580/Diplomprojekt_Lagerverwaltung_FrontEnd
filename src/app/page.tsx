@@ -1,16 +1,19 @@
+"use client";
 import * as React from 'react';
-import Sidebar  from "./components/Sidebar/Sidebar";
+import { useState } from 'react';
+import Sidebar from "./components/Sidebar/Sidebar";
 import TopBar from "./components/TopBar/TopBar";
 import GetProducts from "@/app/components/ProductsAPI/GetProducts";
-//import Grid from "./components/Grid/Grid";
-
 
 export default function Home() {
-  return (
-      <div>
-        <Sidebar />
-        <TopBar />
-        <GetProducts />
-      </div>
-  );
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("name"); // Default sort by name
+
+    return (
+        <div>
+            <Sidebar />
+            <TopBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} sortBy={sortBy} setSortBy={setSortBy} />
+            <GetProducts searchQuery={searchQuery} sortBy={sortBy} />
+        </div>
+    );
 }

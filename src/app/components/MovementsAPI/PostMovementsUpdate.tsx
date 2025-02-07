@@ -13,7 +13,7 @@ export default function PostMovements() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5001/api/Movements/update")
+        fetch("http://localhost:5100/api/Movements/update")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
