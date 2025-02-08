@@ -1,8 +1,8 @@
 "use client";
 import * as React from 'react';
 import { useState } from 'react';
-import Sidebar from "./components/Sidebar/Sidebar";
-import TopBar from "./components/TopBar/TopBar";
+import Sidebar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
 import GetProducts from "@/app/components/ProductsAPI/GetProducts";
 
 export default function Home() {

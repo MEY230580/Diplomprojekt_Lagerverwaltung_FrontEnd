@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Sidebar from "@/app/components/Sidebar/Sidebar";
+import Sidebar from "@/app/components/Sidebar";
 
 export default function Page() {
     return (

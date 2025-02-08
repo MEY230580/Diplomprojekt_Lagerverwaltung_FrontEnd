@@ -1,49 +1,46 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { LockOutlined } from "@mui/icons-material";
-import { Container, CssBaseline, Box, Avatar, Typography, TextField, Button, } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Container, CssBaseline, Box, Avatar, Typography, TextField, Button } from "@mui/material";
+import { useState } from "react";
 
 export default function Page() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    useEffect(() => {
-        fetch("http://localhost:5100/api/auth/login")
-        .then((response) => response.json())
-        .then((data) => {
-            console.log("API Response:", data);
-            setUsername(data.$values);
-        })
-            .catch((error) => {
-                console.error("Error retrieving data:", error);
-                setError(error.message);
+    const handleLogIn = async () => {
+        try {
+            const response = await fetch("http://localhost:5100/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
             });
-    }, []);
 
-    const handleLogIn = () => {
-        if (!username) {
-            console.log("Wrong Username!");
+            if (!response.ok) {
+                throw new Error("Invalid credentials");
+            }
+
+            const data = await response.json();
+            localStorage.setItem("authToken", data.token); // Store token
+            router.push("/"); // Redirect to the home page
+        } catch (error) {
+            console.error("Login error:", error);
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError("An unknown error occurred.");
+            }
         }
-        if (!password) {
-            console.log("Wrong Password!");
-        }
-        setUsername(username);
-    }
+    };
 
     return (
         <>
-            {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
+            {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ {error} ⚠</p>}
             <Container maxWidth="xs">
                 <CssBaseline />
-                <Box
-                    sx={{
-                        mt: 20,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                    }}
-                >
+                <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Avatar sx={{ m: 1, bgcolor: "primary.light" }}>
                         <LockOutlined />
                     </Avatar>
@@ -53,34 +50,20 @@ export default function Page() {
                             margin="normal"
                             required
                             fullWidth
-                            id="username"
-                            label="Email Address"
-                            name="email"
-                            autoFocus
+                            label="Username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                         />
-
                         <TextField
                             margin="normal"
                             required
                             fullWidth
-                            id="password"
-                            name="password"
                             label="Password"
                             type="password"
                             value={password}
-                            onChange={(e) => {
-                                setPassword(e.target.value);
-                            }}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
-
-                        <Button
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                            onClick={handleLogIn}
-                        >
+                        <Button fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} onClick={handleLogIn}>
                             Login
                         </Button>
                     </Box>

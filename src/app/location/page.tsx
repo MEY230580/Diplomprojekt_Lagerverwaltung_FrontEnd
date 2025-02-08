@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Container, CssBaseline, Box, Typography, Button, } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar  from "@/app/components/Sidebar/Sidebar";
+import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
+import Sidebar  from "@/app/components/Sidebar";
 
 interface Warehouse {
     id: number;
@@ -16,6 +17,7 @@ export default function Page(){
     const router = useRouter();
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const { darkMode } = useTheme();
 
     useEffect(() => {
         fetch("http://localhost:5100/api/Warehouse")
@@ -51,11 +53,12 @@ export default function Page(){
                                 sx={{
                                     mt: 3,
                                     mb: 2,
-                                    backgroundColor: "#fff",
-                                    color: "#000",
+                                    backgroundColor: darkMode ? "#333" : "#fff", // Button background based on mode
+                                    color: darkMode ? "#fff" : "#000", // Text color for button
                                     "&:hover": {
-                                        backgroundColor: "#e3d5c6",
-                                        color: "black" }
+                                        backgroundColor: darkMode ? "#D67A69" : "#e3d5c6" , // Button hover effect for dark/light mode
+                                        color: darkMode ? "#333" : "#000", // Button text hover color
+                                    },
                                 }}
                                 onClick={() => handleChangeLocation(warehouse.id)} // Pass the warehouse ID
                             >

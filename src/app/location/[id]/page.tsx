@@ -1,7 +1,7 @@
 "use client";
 import {useEffect, useState} from "react";
 import {Container, CssBaseline, Box, Typography, CircularProgress} from "@mui/material";
-import Sidebar from "@/app/components/Sidebar/Sidebar";
+import Sidebar from "@/app/components/Sidebar";
 import {useParams} from "next/navigation";
 
 interface Warehouse {

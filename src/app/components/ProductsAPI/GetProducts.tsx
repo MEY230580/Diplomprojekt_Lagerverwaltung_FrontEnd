@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import {useRouter} from "next/navigation";
 import { Container, CssBaseline, Box, Typography, Button, Grid, } from "@mui/material";
+import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 
 interface Product {
     id: number;
@@ -19,6 +20,7 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const { darkMode } = useTheme();
 
     useEffect(() => {
         fetch("http://localhost:5100/api/products")
@@ -47,21 +49,36 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
 
     return (
         <>
-            {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ {error} ⚠</p>}
+            {error && (
+                <p className="flex items-center justify-center text-lg text-red-500">
+                    ⚠ {error} ⚠
+                </p>
+            )}
             <Container maxWidth="sm">
                 <CssBaseline />
-                <Box sx={{mt: 20, display: "flex", flexDirection: 'column', alignItems: "center", }}>
-                    <Typography variant="h4"> Article List</Typography>
-                    <Grid container spacing={ 3 } sx={{ mt: 3 }}>
+                <Box
+                    sx={{
+                        mt: 20,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        backgroundColor: darkMode ? "#121212" : "#fff", // Dark Mode background
+                        color: darkMode ? "#fff" : "#333", // Dark Mode text color
+                    }}
+                >
+                    <Grid container spacing={3} sx={{ mt: 3 }}>
                         {sortedProducts.map((product) => (
                             <Grid item xs={12} sm={6} md={4} key={product.id}>
                                 <Button
                                     fullWidth
                                     variant="contained"
                                     sx={{
-                                        backgroundColor: "#fff",
-                                        color: "#000",
-                                        "&:hover": { backgroundColor: "#e3d5c6", color: "black" },
+                                        backgroundColor: darkMode ? "#333" : "#fff", // Button background based on mode
+                                        color: darkMode ? "#fff" : "#000", // Text color for button
+                                        "&:hover": {
+                                            backgroundColor: darkMode ? "#D67A69" : "#e3d5c6" , // Button hover effect for dark/light mode
+                                            color: darkMode ? "#333" : "#000", // Button text hover color
+                                        },
                                     }}
                                     onClick={() => router.push(`/products/${product.id}`)}
                                 >

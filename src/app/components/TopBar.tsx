@@ -17,7 +17,7 @@ export default function TopBar({ searchQuery, setSearchQuery, sortBy, setSortBy 
     return (
         <div className="flex justify-end items-start m-4">
             { /*Search Input*/ }
-            <FormControl sx={{ width: { xs: '100%', md: '25ch' } }} variant="outlined">
+            <FormControl sx={{ width: { xs: '100%', md: '25ch' }, position: "absolute", top: 20, right: 150 }} variant="outlined">
                 <OutlinedInput
                     size="small"
                     id="search"
@@ -35,7 +35,7 @@ export default function TopBar({ searchQuery, setSearchQuery, sortBy, setSortBy 
             </FormControl>
 
             { /*Sorting Dropdown*/ }
-            <FormControl sx={{minWidth: 120}}>
+            <FormControl sx={{minWidth: 120, position: "absolute", top: 20, right: 20 }}>
                 <Select
                     size="small"
                     value={sortBy}
