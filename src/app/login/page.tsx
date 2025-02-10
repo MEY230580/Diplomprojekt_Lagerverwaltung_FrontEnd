@@ -23,15 +23,11 @@ export default function Page() {
             }
 
             const data = await response.json();
-            localStorage.setItem("authToken", data.token); // Store token
-            router.push("/"); // Redirect to the home page
+            localStorage.setItem("authToken", data.token);
+            router.push("/"); // Redirect to the main page
         } catch (error) {
             console.error("Login error:", error);
-            if (error instanceof Error) {
-                setError(error.message);
-            } else {
-                setError("An unknown error occurred.");
-            }
+            setError(error instanceof Error ? error.message : "An unknown error occurred.");
         }
     };
 
