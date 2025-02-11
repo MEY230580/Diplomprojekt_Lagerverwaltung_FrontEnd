@@ -1,29 +1,29 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, IconButton } from "@mui/material";
-import { Home, Person, LocationOn, BarChart, Settings, Menu, Close } from "@mui/icons-material";
+import { Home, Person, LocationOn, BarChart, Menu, Close } from "@mui/icons-material";
 import Link from "next/link";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 
 export default function Sidebar() {
-    const { darkMode } = useTheme(); // Get dark mode state
+    const { darkMode } = useTheme(); //Get dark mode state
 
-    // 🟢 Initialize the sidebar collapsed state from localStorage
+    //Initialize the sidebar collapsed state from localStorage
     const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
-    // 🟢 Check localStorage on initial render to get the saved collapsed state
+    //Check localStorage on initial render to get the saved collapsed state
     useEffect(() => {
         const savedCollapsedState = localStorage.getItem("sidebarCollapsed");
         if (savedCollapsedState) {
-            setIsCollapsed(savedCollapsedState === "true"); // If it's "true", collapse the sidebar
+            setIsCollapsed(savedCollapsedState === "true"); //If it's "true", collapse the sidebar
         }
     }, []);
 
-    // 🟢 Toggle the collapsed state and save it to localStorage
+    //Toggle the collapsed state and save it to localStorage
     const toggleSidebar = () => {
         setIsCollapsed((prev) => {
             const newState = !prev;
-            localStorage.setItem("sidebarCollapsed", newState.toString()); // Save state in localStorage
+            localStorage.setItem("sidebarCollapsed", newState.toString()); //Save state in localStorage
             return newState;
         });
     };
@@ -33,7 +33,6 @@ export default function Sidebar() {
         { text: "User", icon: <Person />, link: "/profile" },
         { text: "Location", icon: <LocationOn />, link: "/location" },
         { text: "Analysis", icon: <BarChart />, link: "/analysis" },
-        { text: "Settings", icon: <Settings />, link: "/settings" },
     ];
 
     return (
@@ -58,7 +57,7 @@ export default function Sidebar() {
                 sx={{
                     m: 2,
                     alignSelf: "center",
-                    color: darkMode ? "#fff" : "#000", // Change button color
+                    color: darkMode ? "#fff" : "#000", //Change button color
                 }}
             >
                 {isCollapsed ? <Menu /> : <Close />}
@@ -71,7 +70,7 @@ export default function Sidebar() {
                         <ListItemButton
                             sx={{
                                 borderRadius: 3,
-                                color: darkMode ? "#fff" : "#333", // Adjust text color
+                                color: darkMode ? "#fff" : "#333", //Adjust text color
                                 "&:hover": { backgroundColor: darkMode ? "#D67A69" : "#e3d5c6" }, // Adjust hover effect
                             }}
                         >

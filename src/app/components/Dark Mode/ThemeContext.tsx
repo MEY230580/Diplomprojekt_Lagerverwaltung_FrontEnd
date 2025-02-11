@@ -3,16 +3,16 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { lightTheme, darkTheme } from "./theme";
 
-//TypeScript-Typen für den Context
+//TypeScript-Types for the context
 interface ThemeContextType {
     darkMode: boolean;
     toggleTheme: () => void;
 }
 
-//Context erstellen (mit Default-Werten)
+//Creating the Context (w/ Default-Values)
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-//ThemeProvider-Wrapper für die gesamte App
+//ThemeProvider-Wrapper fot the whole website
 export const ThemeProviderWrapper = ({ children }: { children: ReactNode }) => {
     const [darkMode, setDarkMode] = useState<boolean | null>(null); //Initial state is null (waiting for client-side check)
 

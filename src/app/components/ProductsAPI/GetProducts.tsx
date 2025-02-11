@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import {useRouter} from "next/navigation";
-import { Container, CssBaseline, Box, Typography, Button, Grid, } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { Container, CssBaseline, Box, Typography, Button, Grid } from "@mui/material";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 
 interface Product {
@@ -14,9 +14,10 @@ interface Product {
 interface GetProductsProps {
     searchQuery: string;
     sortBy: string;
+    selectedLocation: string;
 }
 
-export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
+export default function GetProducts({ searchQuery, sortBy, selectedLocation }: GetProductsProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
@@ -35,12 +36,12 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
             });
     }, []);
 
-    // Filter products based on search query
-    const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    //Filter products by selected location
+    const filteredProducts = products.filter(
+        (product) => product.location === selectedLocation && product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Sort products based on the selected sorting option
+    //Sort products
     const sortedProducts = [...filteredProducts].sort((a, b) => {
         if (sortBy === "name") return a.name.localeCompare(b.name);
         if (sortBy === "quantity") return b.quantity - a.quantity;
@@ -49,23 +50,11 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
 
     return (
         <>
-            {error && (
-                <p className="flex items-center justify-center text-lg text-red-500">
-                    ⚠ {error} ⚠
-                </p>
-            )}
+            {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ {error} ⚠</p>}
             <Container maxWidth="sm">
                 <CssBaseline />
-                <Box
-                    sx={{
-                        mt: 20,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        backgroundColor: darkMode ? "#121212" : "#fff", // Dark Mode background
-                        color: darkMode ? "#fff" : "#333", // Dark Mode text color
-                    }}
-                >
+                <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: darkMode ? "#121212" : "#fff", color: darkMode ? "#fff" : "#333" }}>
+                    <Typography variant="h4">Products at {selectedLocation}</Typography>
                     <Grid container spacing={3} sx={{ mt: 3 }}>
                         {sortedProducts.map((product) => (
                             <Grid item xs={12} sm={6} md={4} key={product.id}>
@@ -73,11 +62,11 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
                                     fullWidth
                                     variant="contained"
                                     sx={{
-                                        backgroundColor: darkMode ? "#333" : "#fff", // Button background based on mode
-                                        color: darkMode ? "#fff" : "#000", // Text color for button
+                                        backgroundColor: darkMode ? "#333" : "#fff",
+                                        color: darkMode ? "#fff" : "#000",
                                         "&:hover": {
-                                            backgroundColor: darkMode ? "#D67A69" : "#e3d5c6" , // Button hover effect for dark/light mode
-                                            color: darkMode ? "#333" : "#000", // Button text hover color
+                                            backgroundColor: darkMode ? "#D67A69" : "#e3d5c6",
+                                            color: darkMode ? "#333" : "#000",
                                         },
                                     }}
                                     onClick={() => router.push(`/products/${product.id}`)}

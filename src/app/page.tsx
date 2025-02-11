@@ -1,15 +1,16 @@
 "use client";
-//import { useEffect } from "react";
-//import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
 import GetProducts from "@/app/components/ProductsAPI/GetProducts";
+import GetWarehouses from "@/app/components/WarehouseAPI/getWarehouses";
 
 export default function Home() {
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("name");
+    const [selectedLocation, setSelectedLocation] = useState<string | null>(null); // Store selected location
+
     {/*
     const router = useRouter();
     useEffect(() => {
@@ -23,8 +24,22 @@ export default function Home() {
     return (
         <div>
             <Sidebar />
-            <TopBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} sortBy={sortBy} setSortBy={setSortBy} />
-            <GetProducts searchQuery={searchQuery} sortBy={sortBy} />
+            {!selectedLocation ? (
+                //Show location selection first
+                <GetWarehouses setSelectedLocation={setSelectedLocation} />
+            ) : (
+                //Once location is selected, show top bar & products
+                <>
+                    <TopBar
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
+                    />
+                    <GetProducts searchQuery={searchQuery} sortBy={sortBy} selectedLocation={selectedLocation} />
+                </>
+            )}
         </div>
     );
 }
+
