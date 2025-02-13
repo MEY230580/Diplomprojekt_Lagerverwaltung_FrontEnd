@@ -1,9 +1,10 @@
 "use client";
-import * as React from 'react';
+import * as React from "react";
 import { Container, CssBaseline, Box, Typography, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 import Sidebar from "@/app/components/Sidebar";
+import { useLocation } from "@/app/location/LocationContext"; // Import context hook
 
 interface Warehouse {
     id: number;
@@ -12,14 +13,11 @@ interface Warehouse {
     products: string[];
 }
 
-interface GetWarehousesProps {
-    setSelectedLocation: (location: string) => void;
-}
-
-export default function GetWarehouses({ setSelectedLocation }: GetWarehousesProps) {
+export default function GetWarehouses() {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [error, setError] = useState<string | null>(null);
     const { darkMode } = useTheme();
+    const { setSelectedLocation } = useLocation(); // Get location setter from context
 
     useEffect(() => {
         fetch("http://localhost:5100/api/Warehouse")
@@ -40,8 +38,8 @@ export default function GetWarehouses({ setSelectedLocation }: GetWarehousesProp
             {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ {error} ⚠</p>}
             <Container maxWidth="sm">
                 <CssBaseline />
-                <Box sx={{ mt: 20, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Typography variant="h2">Which Location are you currently at? </Typography>
+                <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <Typography variant="h2">Which Location are you currently at?</Typography>
                     <Box sx={{ mt: 3 }}>
                         {warehouses.map((warehouse) => (
                             <Button
@@ -58,7 +56,7 @@ export default function GetWarehouses({ setSelectedLocation }: GetWarehousesProp
                                         color: darkMode ? "#333" : "#000",
                                     },
                                 }}
-                                onClick={() => setSelectedLocation(warehouse.location)} // Store selected location
+                                onClick={() => setSelectedLocation(warehouse.location)} // Store selected location globally
                             >
                                 {warehouse.name}
                             </Button>

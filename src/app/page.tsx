@@ -1,45 +1,27 @@
 "use client";
 import * as React from "react";
-import { useState } from "react";
 import Sidebar from "./components/Sidebar";
-import TopBar from "./components/TopBar";
+import TopBar from "./components/TopBar/TopBar";
 import GetProducts from "@/app/components/ProductsAPI/GetProducts";
 import GetWarehouses from "@/app/components/WarehouseAPI/getWarehouses";
+import { useLocation } from "@/app/location/LocationContext";// Import Context Hook
+import { useSearch } from "@/app/components/TopBar/SearchContext";
 
 export default function Home() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("name");
-    const [selectedLocation, setSelectedLocation] = useState<string | null>(null); // Store selected location
-
-    {/*
-    const router = useRouter();
-    useEffect(() => {
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-            router.replace("/login"); // Use replace instead of push to avoid back button issues
-        }
-    }, [router]);
-    */}
+    const { selectedLocation } = useLocation();
+    const { searchQuery, sortBy } = useSearch(); // ✅ Use context
 
     return (
         <div>
             <Sidebar />
             {!selectedLocation ? (
-                //Show location selection first
-                <GetWarehouses setSelectedLocation={setSelectedLocation} />
+                <GetWarehouses />
             ) : (
-                //Once location is selected, show top bar & products
                 <>
-                    <TopBar
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        sortBy={sortBy}
-                        setSortBy={setSortBy}
-                    />
+                    <TopBar />
                     <GetProducts searchQuery={searchQuery} sortBy={sortBy} selectedLocation={selectedLocation} />
                 </>
             )}
         </div>
     );
 }
-
