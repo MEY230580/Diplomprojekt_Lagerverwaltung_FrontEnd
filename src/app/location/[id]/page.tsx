@@ -8,7 +8,7 @@ interface Warehouse {
     id: number;
     name: string;
     location: string;
-    products: string[];
+    products: string[]; // ✅ Treats products as a simple array
 }
 
 export default function LocationChange() {
@@ -22,17 +22,23 @@ export default function LocationChange() {
 
         fetch(`http://localhost:5100/api/Warehouse/${id}`)
             .then(response => response.json())
-            .then ((data) => {
+            .then((data) => {
                 console.log("API Response:", data);
-                setWarehouse(data);
+                // Ensure `products` is extracted correctly
+                const formattedData: Warehouse = {
+                    ...data,
+                    products: Array.isArray(data.products?.$values) ? data.products.$values : []
+                };
+                setWarehouse(formattedData);
                 setLoading(false);
             })
-            .catch ((error) => {
-               console.error("Error retrieving Data:", error);
-               setError(error.message);
-               setLoading(false);
+            .catch((error) => {
+                console.error("Error retrieving Data:", error);
+                setError(error.message);
+                setLoading(false);
             });
     }, [id]);
+
 
     if (loading) return <CircularProgress sx={{display: "block", margin: "auto", mt: 4 }} />;
     if (error) return <Typography color="error">⚠ {error} ⚠</Typography>;
@@ -47,11 +53,11 @@ export default function LocationChange() {
                     <Typography variant="h6" sx={{ mt:2 }}>Location: {warehouse?.location}</Typography>
                     <Box sx={{ mt: 2 }}>
                         {warehouse?.products.length ? (
-                            warehouse.products.map((product, index) => (
-                                <Typography key={index} variant="body1" >{product}</Typography>
+                            warehouse.products.map((product: string, index: number) => (
+                                <Typography key={index} variant="body1">{product}</Typography>
                             ))
-                            ) : (
-                                <Typography variant="body1">No products available</Typography>
+                        ) : (
+                            <Typography variant="body1">No products available</Typography>
                         )}
                     </Box>
                 </Box>

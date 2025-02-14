@@ -10,8 +10,9 @@ interface Warehouse {
     id: number;
     name: string;
     location: string;
-    products: string[];
+    products: { $values: string[] }; // Adjusted to match API response
 }
+
 
 export default function GetWarehouses() {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
