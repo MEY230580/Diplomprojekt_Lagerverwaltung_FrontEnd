@@ -1,36 +1,50 @@
 "use client";
 import { Avatar, Box, Button, Container, CssBaseline, Grid, TextField, Typography } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
-import {useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Page() {
     const [username, setUsername] = useState("");
     const [fullname, setFullname] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState(null);
+    const [registerError, setRegisterError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetch("http://localhost:5100/api/auth/register")
-        .then(res => res.json())
-        .then((data) => {
-            console.log("API Ressponse:", data);
-            setUsername(data.$values);
-        })
-        .catch((error) => {
-            console.error("Error retieving data:", error);
-            setError(error.message);
-        })
-    }, []);
+    const apiUrl = "http://localhost:5100/api/auth/register";
 
-    const handleRegister = async () => {};
+    const handleRegister = async () => {
+        setLoading(true);
+        setRegisterError(null);
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fullname, username, email, password }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Registration failed");
+            }
+
+            alert("Registration successful!");
+        } catch (error) {
+            setRegisterError((error as Error).message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <>
-            {error && <p className="flex items-center justify-center  text-lg  text-red-500">⚠ {error} ⚠</p>}
+            {registerError && (
+                <p className="flex items-center justify-center text-lg text-red-500">⚠ {registerError} ⚠</p>
+            )}
             <Container maxWidth="xs">
                 <CssBaseline />
-                <Box sx = {{mt: 20, display: "flex", flexDirection: "column", alignItems: "center", }}>
+                <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Avatar sx={{ m: 1, bgcolor: "primary.light" }}>
                         <LockOutlined />
                     </Avatar>
@@ -83,7 +97,15 @@ export default function Page() {
                                 />
                             </Grid>
                         </Grid>
-                        <Button fullWidth variant="contained" sx={{ mt:3, mb: 2 }} onClick={handleRegister}>Register</Button>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            sx={{ mt: 3, mb: 2 }}
+                            onClick={handleRegister}
+                            disabled={loading}
+                        >
+                            {loading ? "Registering..." : "Register"}
+                        </Button>
                     </Box>
                 </Box>
             </Container>

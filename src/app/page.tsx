@@ -2,8 +2,8 @@
 import * as React from "react";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar/TopBar";
-import GetProducts from "@/app/components/ProductsAPI/GetProducts";
-import GetWarehouses from "@/app/components/WarehouseAPI/getWarehouses";
+import GetProducts from "@/app/Service/api/ProductsAPI/GetProducts";
+import GetWarehouses from "@/app/Service/api/WarehouseAPI/getWarehouses";
 import { useLocation } from "@/app/location/LocationContext";// Import Context Hook
 import { useSearch } from "@/app/components/TopBar/SearchContext";
 

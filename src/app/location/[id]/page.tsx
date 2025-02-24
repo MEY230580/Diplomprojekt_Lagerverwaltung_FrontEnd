@@ -1,47 +1,29 @@
 "use client";
-import {useEffect, useState} from "react";
-import {Container, CssBaseline, Box, Typography, CircularProgress} from "@mui/material";
+import { Container, CssBaseline, Box, Typography, CircularProgress } from "@mui/material";
 import Sidebar from "@/app/components/Sidebar";
-import {useParams} from "next/navigation";
+import { useParams } from "next/navigation";
+import useFetch from "@/app/hooks/useFetch";
+import * as React from "react";
 
 interface Warehouse {
     id: number;
     name: string;
     location: string;
-    products: string[]; // ✅ Treats products as a simple array
+    products: string[];
 }
 
 export default function LocationChange() {
     const { id } = useParams();
-    const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (!id) return;
+    const apiUrl = `http://localhost:5100/api/Warehouse/${id}`; // ✅ Fixed template string
+    const { data, loading, error } = useFetch(apiUrl);
+    if (!id) return <Typography color="error">Invalid warehouse ID</Typography>;
 
-        fetch(`http://localhost:5100/api/Warehouse/${id}`)
-            .then(response => response.json())
-            .then((data) => {
-                console.log("API Response:", data);
-                // Ensure `products` is extracted correctly
-                const formattedData: Warehouse = {
-                    ...data,
-                    products: Array.isArray(data.products?.$values) ? data.products.$values : []
-                };
-                setWarehouse(formattedData);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error("Error retrieving Data:", error);
-                setError(error.message);
-                setLoading(false);
-            });
-    }, [id]);
+    // ✅ Convert 'data' to Warehouse type or set it to null if not valid
+    const warehouse: Warehouse | null = data as Warehouse | null;
 
-
-    if (loading) return <CircularProgress sx={{display: "block", margin: "auto", mt: 4 }} />;
-    if (error) return <Typography color="error">⚠ {error} ⚠</Typography>;
+    if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
+    if (error) return <Typography color="error">⚠ {error.message} ⚠</Typography>; // ✅ Fixed error display
 
     return (
         <>
@@ -49,10 +31,10 @@ export default function LocationChange() {
             <Container maxWidth="sm">
                 <CssBaseline />
                 <Box sx={{ mt: 20, textAlign: "center" }}>
-                    <Typography variant="h4">{warehouse?.name}</Typography>
-                    <Typography variant="h6" sx={{ mt:2 }}>Location: {warehouse?.location}</Typography>
+                    <Typography variant="h4">{warehouse?.name || "Unknown Warehouse"}</Typography>
+                    <Typography variant="h6" sx={{ mt: 2 }}>Location: {warehouse?.location || "Unknown"}</Typography>
                     <Box sx={{ mt: 2 }}>
-                        {warehouse?.products.length ? (
+                        {warehouse?.products?.length ? (
                             warehouse.products.map((product: string, index: number) => (
                                 <Typography key={index} variant="body1">{product}</Typography>
                             ))
