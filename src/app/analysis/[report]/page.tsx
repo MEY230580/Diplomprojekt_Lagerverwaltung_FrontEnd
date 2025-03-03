@@ -1,5 +1,4 @@
 "use client";
-import Sidebar from "@/app/components/Sidebar";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
@@ -32,7 +31,7 @@ export default function ReportPage() {
 
         let apiUrl = reportApiMap[report];
         if (!apiUrl) {
-            setError("Invalid report type.");
+            setError("Invalid [report] type.");
             setLoading(false);
             return;
         }
@@ -45,8 +44,12 @@ export default function ReportPage() {
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch data");
-                const result: ReportData[] = await response.json();
-                setData(Array.isArray(result) ? result : [result]);
+                const result: ReportData = await response.json();
+
+                // Ensure $values is treated as an array, otherwise set an empty array
+                const extractedData = Array.isArray(result.$values) ? result.$values : [];
+
+                setData(extractedData as ReportData[]);
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -54,8 +57,10 @@ export default function ReportPage() {
             }
         };
 
+
         fetchData();
     }, [report]);
+
 
     if (!report) return <Typography align="center">No report selected.</Typography>;
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
@@ -63,7 +68,6 @@ export default function ReportPage() {
 
     return (
         <div>
-            <Sidebar />
             <Typography variant="h4" align="center" gutterBottom>
                 {report.replace(/-/g, " ").toUpperCase()} Report
             </Typography>
@@ -79,38 +83,11 @@ export default function ReportPage() {
                     <TableBody>
                         {data.map((row, index) => (
                             <TableRow key={index}>
-                                {Object.entries(row).map((entry, idx) => {
-                                    const value = entry[1]; // Only use the value from the entry
-                                    return (
-                                        <TableCell key={idx}>
-                                            {Array.isArray(value) ? (
-                                                // If value is an array of objects, display key-value pairs
-                                                value.map((obj, i) =>
-                                                    typeof obj === "object" && obj !== null ? (
-                                                        <div key={i}>
-                                                            {Object.entries(obj).map(([subKey, subValue]) => (
-                                                                <div key={subKey}>
-                                                                    <strong>{subKey}:</strong> {subValue?.toString() || "N/A"}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <div key={i}>{obj?.toString() || "N/A"}</div>
-                                                    )
-                                                )
-                                            ) : typeof value === "object" && value !== null ? (
-                                                // If value is a single object, display its key-value pairs
-                                                Object.entries(value).map(([subKey, subValue]) => (
-                                                    <div key={subKey}>
-                                                        <strong>{subKey}:</strong> {subValue?.toString() || "N/A"}
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                value?.toString() || "N/A"
-                                            )}
-                                        </TableCell>
-                                    );
-                                })}
+                                {Object.entries(row).map(([key, value]) => (
+                                    <TableCell key={key}>
+                                        <strong>{key}:</strong> {typeof value === "object" && value !== null ? JSON.stringify(value) : value?.toString() || "N/A"}
+                                    </TableCell>
+                                ))}
                             </TableRow>
                         ))}
                     </TableBody>
