@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
-export default function useFetch(url: string) {
-    const [data, setData] = useState<unknown | null>(null);
+export default function useFetch<T = unknown>(url: string) {
+    const [data, setData] = useState<T | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -10,16 +10,12 @@ export default function useFetch(url: string) {
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error("Network response was not okay");
+                    throw new Error(`Network response was not okay (Status: ${response.status})`);
                 }
-                const jsonData: unknown = await response.json();
+                const jsonData: T = await response.json(); // Ensure correct type inference
                 setData(jsonData);
             } catch (error) {
-                if (error instanceof Error) {
-                    setError(error);
-                } else {
-                    setError(new Error("An unknown error occurred"));
-                }
+                setError(error instanceof Error ? error : new Error("An unknown error occurred"));
             } finally {
                 setLoading(false);
             }

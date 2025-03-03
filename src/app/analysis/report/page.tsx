@@ -11,6 +11,7 @@ interface ReportData {
 
 //API endpoints mapping
 const reportApiMap: Record<string, string> = {
+    "AuditLogs": "http://localhost:5100/api/AuditLogs",
     "low-stock-products": "http://localhost:5100/api/Reports/low-stock-products",
     "movements-per-day": "http://localhost:5100/api/Reports/movements-per-day",
     "restocks-per-period": "http://localhost:5100/api/Reports/restocks-per-period",

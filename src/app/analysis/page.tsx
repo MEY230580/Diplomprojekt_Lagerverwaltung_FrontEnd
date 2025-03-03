@@ -9,13 +9,16 @@ export default function Page() {
     const router = useRouter();
 
     const navigateToReport = (report: string) => {
-        router.push(`/analysis/${report}`);
+        router.push(`/analysis/report/${report}`);
     };
 
     return (
         <>
             <Sidebar />
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, mt: 4 }}>
+                <Button variant="contained" onClick={() => navigateToReport("AuditLogs")}>
+                    Low Stock
+                </Button>
                 <Button variant="contained" onClick={() => navigateToReport("low-stock-products")}>
                     Low Stock
                 </Button>
