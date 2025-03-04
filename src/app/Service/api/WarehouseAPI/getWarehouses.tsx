@@ -4,26 +4,40 @@ import { Container, CssBaseline, Box, Typography, Button } from "@mui/material";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 import Sidebar from "@/app/components/Sidebar";
 import { useLocation } from "@/app/location/LocationContext";
-import useFetch from "@/app/hooks/useFetch"; // Import context hook
+import useFetch from "@/app/hooks/useFetch";
+import { useRouter } from "next/navigation";
 
 interface Warehouse {
     id: number;
     name: string;
     location: string;
-    products: { $values: string[] }; // Adjusted to match API response
+    products: { $values: string[] };
 }
 
 export default function GetWarehouses() {
     const { darkMode } = useTheme();
-    const { setSelectedLocation } = useLocation(); // Get location setter from context
+    const { selectedLocation, setSelectedLocation } = useLocation();
+    const router = useRouter();
 
-    const apiUrl = 'http://localhost:5100/api/Warehouse';
-    const { data, loading, error } = useFetch(apiUrl); // Explicitly set type for data
+    const apiUrl = "http://localhost:5100/api/Warehouse";
+    const { data, loading, error } = useFetch(apiUrl);
+    console.log("API Response:", data); //Debugging: Check API response
 
-    // If loading, show loading state
-    if (loading) {
-        return <p>Loading...</p>;
-    }
+    //FIX: Ensure `data` is correctly formatted
+    const warehouses: Warehouse[] = (data as { $values: Warehouse[] })?.$values ?? [];
+
+    React.useEffect(() => {
+        if (selectedLocation) {
+            router.push("/");
+        }
+    }, [selectedLocation, router]);
+
+    if (loading) return <p>Loading...</p>;
+
+    const handleLocationSelect = (location: string) => {
+        setSelectedLocation(location);
+        router.push("/");
+    };
 
     return (
         <>
@@ -34,9 +48,8 @@ export default function GetWarehouses() {
                 <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <Typography variant="h2">Which Location are you currently at?</Typography>
                     <Box sx={{ mt: 3 }}>
-                        {/* Ensure data is an array before calling map */}
-                        {Array.isArray(data) && data.length > 0 ? (
-                            data.map((warehouse: Warehouse) => (
+                        {warehouses.length > 0 ? (
+                            warehouses.map((warehouse: Warehouse) => (
                                 <Button
                                     key={warehouse.id}
                                     fullWidth
@@ -51,13 +64,13 @@ export default function GetWarehouses() {
                                             color: darkMode ? "#333" : "#000",
                                         },
                                     }}
-                                    onClick={() => setSelectedLocation(warehouse.location)} // Store selected location globally
+                                    onClick={() => handleLocationSelect(warehouse.location)}
                                 >
                                     {warehouse.name}
                                 </Button>
                             ))
                         ) : (
-                            <Typography variant="body1">No warehouses available.</Typography>
+                            <Typography variant="body1">⚠ No warehouses available.</Typography>
                         )}
                     </Box>
                 </Box>

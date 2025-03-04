@@ -29,7 +29,9 @@ export default function Page() {
     }
 
     // Ensure data is an array before mapping
-    const warehouses: Warehouse[] = Array.isArray(data) ? data : [];
+    const warehouses: Warehouse[] = (data as { $values: Warehouse[] })?.$values ?? [];
+
+
 
     const handleChangeLocation = (id: number) => {
         router.push(`/location/${id}`);
