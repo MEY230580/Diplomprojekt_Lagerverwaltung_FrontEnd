@@ -29,7 +29,8 @@ export default function Page() {
     }
 
     // Ensure data is an array before mapping
-    const warehouses: Warehouse[] = (data as { $values: Warehouse[] })?.$values ?? [];
+    const warehouses: Warehouse[] = Array.isArray(data) ? data : [];
+
 
 
 

@@ -1,78 +1,72 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Container, CssBaseline, Box, Typography, Button, Grid } from "@mui/material";
-import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
-import useFetch from "@/app/hooks/useFetch";
 import * as React from "react";
+import { Container, CssBaseline, Box, Typography, Button } from "@mui/material";
+import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
+import Sidebar from "@/app/components/Sidebar";
+import { useLocation } from "@/app/location/LocationContext";
+import useFetch from "@/app/hooks/useFetch";
+import { useRouter } from "next/navigation";
 
 interface Product {
-    id: number;
+    id: string;
     name: string;
     quantity: number;
+}
+
+interface Warehouse {
+    id: string;
+    name: string;
     location: string;
+    products: Product[];
 }
 
-interface GetProductsProps {
-    searchQuery: string;
-    sortBy: string;
-    selectedLocation: string;
-}
-
-export default function GetProducts({ searchQuery, sortBy, selectedLocation }: GetProductsProps) {
-    const [products, setProducts] = useState<Product[]>([]);
-    const router = useRouter();
+export default function GetWarehouses() {
     const { darkMode } = useTheme();
+    const { selectedLocation, setSelectedLocation } = useLocation();
+    const router = useRouter();
 
-    const apiUrl = "http://localhost:5100/api/products";
+    const apiUrl = "http://localhost:5100/api/Warehouse";
     const { data, loading, error } = useFetch(apiUrl);
+    console.log("API Response:", data); // Debugging: Check API response
 
-    // Ensure data is an array before setting state
-    useEffect(() => {
-        if (Array.isArray(data)) {
-            setProducts(data);
+    const warehouses: Warehouse[] = Array.isArray(data) ? data : [];
+    const [selectedWarehouse, setSelectedWarehouse] = React.useState<Warehouse | null>(null);
+
+    React.useEffect(() => {
+        if (selectedLocation) {
+            // Warehouse anhand des Standorts finden
+            const warehouse = warehouses.find((w) => w.location === selectedLocation);
+            if (warehouse) {
+                setSelectedWarehouse(warehouse); // Warehouse setzen
+            }
+            router.push("/"); // zurück zur Startseite nach Auswahl
         }
-    }, [data]);
+    }, [selectedLocation, warehouses, router]);
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
 
-    // Filter and sort products
-    const filteredProducts = products.filter(
-        (product) =>
-            product.location === selectedLocation &&
-            product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const sortedProducts = [...filteredProducts].sort((a, b) => {
-        if (sortBy === "name") return a.name.localeCompare(b.name);
-        if (sortBy === "quantity") return b.quantity - a.quantity;
-        return 0;
-    });
+    const handleLocationSelect = (location: string) => {
+        setSelectedLocation(location); // Standort setzen
+        router.push("/"); // Weiterleitung zur Startseite
+    };
 
     return (
         <>
-            {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ {error} ⚠</p>}
+            <Sidebar />
+            {error && <p className="flex items-center justify-center text-lg text-red-500">⚠ error ⚠</p>}
             <Container maxWidth="sm">
                 <CssBaseline />
-                <Box
-                    sx={{
-                        mt: 20,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        backgroundColor: darkMode ? "#121212" : "#fff",
-                        color: darkMode ? "#fff" : "#333",
-                    }}
-                >
-                    <Typography variant="h4">Products at {selectedLocation}</Typography>
-                    <Grid container spacing={3} sx={{ mt: 3 }}>
-                        {sortedProducts.map((product) => (
-                            <Grid item xs={12} sm={6} md={4} key={product.id}>
+                <Box sx={{ mt: 20, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <Typography variant="h2">Which Location are you currently at?</Typography>
+                    <Box sx={{ mt: 3 }}>
+                        {warehouses.length > 0 ? (
+                            warehouses.map((warehouse: Warehouse) => (
                                 <Button
+                                    key={warehouse.id}
                                     fullWidth
                                     variant="contained"
                                     sx={{
+                                        mt: 3,
+                                        mb: 2,
                                         backgroundColor: darkMode ? "#333" : "#fff",
                                         color: darkMode ? "#fff" : "#000",
                                         "&:hover": {
@@ -80,13 +74,35 @@ export default function GetProducts({ searchQuery, sortBy, selectedLocation }: G
                                             color: darkMode ? "#333" : "#000",
                                         },
                                     }}
-                                    onClick={() => router.push(`/products/${product.id}`)}
+                                    onClick={() => handleLocationSelect(warehouse.location)} // Location auswählen
                                 >
-                                    <Typography variant="h6">{product.name}</Typography>
+                                    {warehouse.name}
                                 </Button>
-                            </Grid>
-                        ))}
-                    </Grid>
+                            ))
+                        ) : (
+                            <Typography variant="body1">⚠ No warehouses available.</Typography>
+                        )}
+                    </Box>
+
+                    {/* Hier die Produkte anzeigen, wenn ein Warehouse ausgewählt ist */}
+                    {selectedWarehouse && (
+                        <Box sx={{ mt: 5 }}>
+                            <Typography variant="h4">Products in {selectedWarehouse.name}</Typography>
+                            {selectedWarehouse.products.length > 0 ? (
+                                <ul>
+                                    {selectedWarehouse.products.map((product) => (
+                                        <li key={product.id}>
+                                            <Typography variant="body1">
+                                                {product.name} - Quantity: {product.quantity}
+                                            </Typography>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <Typography variant="body1">No products available.</Typography>
+                            )}
+                        </Box>
+                    )}
                 </Box>
             </Container>
         </>

@@ -1,4 +1,3 @@
-"use client";
 import * as React from "react";
 import { Container, CssBaseline, Box, Typography, Button } from "@mui/material";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
@@ -7,11 +6,17 @@ import { useLocation } from "@/app/location/LocationContext";
 import useFetch from "@/app/hooks/useFetch";
 import { useRouter } from "next/navigation";
 
+interface Product {
+    id: string;
+    name: string;
+    quantity: number;
+}
+
 interface Warehouse {
-    id: number;
+    id: string;
     name: string;
     location: string;
-    products: { $values: string[] };
+    products: Product[];
 }
 
 export default function GetWarehouses() {
@@ -21,16 +26,20 @@ export default function GetWarehouses() {
 
     const apiUrl = "http://localhost:5100/api/Warehouse";
     const { data, loading, error } = useFetch(apiUrl);
-    console.log("API Response:", data); //Debugging: Check API response
+    console.log("API Response:", data); // Debugging: Check API response
 
-    //FIX: Ensure `data` is correctly formatted
-    const warehouses: Warehouse[] = (data as { $values: Warehouse[] })?.$values ?? [];
+    const warehouses: Warehouse[] = Array.isArray(data) ? data : [];
+    const [selectedWarehouse, setSelectedWarehouse] = React.useState<Warehouse | null>(null);
 
     React.useEffect(() => {
         if (selectedLocation) {
+            const warehouse = warehouses.find((w) => w.location === selectedLocation);
+            if (warehouse) {
+                setSelectedWarehouse(warehouse);
+            }
             router.push("/");
         }
-    }, [selectedLocation, router]);
+    }, [selectedLocation, warehouses, router]);
 
     if (loading) return <p>Loading...</p>;
 
@@ -73,6 +82,25 @@ export default function GetWarehouses() {
                             <Typography variant="body1">⚠ No warehouses available.</Typography>
                         )}
                     </Box>
+
+                    {selectedWarehouse && (
+                        <Box sx={{ mt: 5 }}>
+                            <Typography variant="h4">Products in {selectedWarehouse.name}</Typography>
+                            {selectedWarehouse.products.length > 0 ? (
+                                <ul>
+                                    {selectedWarehouse.products.map((product) => (
+                                        <li key={product.id}>
+                                            <Typography variant="body1">
+                                                {product.name} - Quantity: {product.quantity}
+                                            </Typography>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <Typography variant="body1">No products available.</Typography>
+                            )}
+                        </Box>
+                    )}
                 </Box>
             </Container>
         </>

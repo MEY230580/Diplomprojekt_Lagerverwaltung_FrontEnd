@@ -29,7 +29,7 @@ const reportApiMap: Record<string, string> = {
 
 export default function ReportPage() {
     const params = useParams();
-    const report = Array.isArray(params.report) ? params.report[0] : params.report; // Ensure it's a string
+    const report = Array.isArray(params.report) ? params.report[0] : params.report;
 
     const [data, setData] = useState<ReportData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -55,10 +55,15 @@ export default function ReportPage() {
                 if (!response.ok) throw new Error("Failed to fetch data");
                 const result: ReportData = await response.json();
 
-                // Ensure $values is treated as an array, otherwise set an empty array
+                //Werte aus $values extrahieren, wenn vorhanden
                 const extractedData = Array.isArray(result.$values) ? result.$values : [];
 
-                setData(extractedData as ReportData[]);
+                //IDs aus den Daten entfernen ohne ESLint-Fehler
+                const filteredData = extractedData.map((item) =>
+                    Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "Id", "_id", "$id"].includes(key.toLowerCase())))
+                );
+
+                setData(filteredData as ReportData[]);
             } catch (err) {
                 setError((err as Error).message);
             } finally {
@@ -69,7 +74,6 @@ export default function ReportPage() {
 
         fetchData();
     }, [report]);
-
 
     if (!report) return <Typography align="center">No report selected.</Typography>;
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
@@ -84,19 +88,24 @@ export default function ReportPage() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            {data.length > 0 && Object.keys(data[0]).map((column) => (
-                                <TableCell key={column}><strong>{column.toUpperCase()}</strong></TableCell>
-                            ))}
+                            {data.length > 0 &&
+                                Object.keys(data[0])
+                                    .filter(column => !["id", "Id", "_id"].includes(column.toLowerCase())) // IDs rausfiltern
+                                    .map((column) => (
+                                        <TableCell key={column}><strong>{column.toUpperCase()}</strong></TableCell>
+                                    ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {data.map((row, index) => (
                             <TableRow key={index}>
-                                {Object.entries(row).map(([key, value]) => (
-                                    <TableCell key={key}>
-                                        <strong>{key}:</strong> {typeof value === "object" && value !== null ? JSON.stringify(value) : value?.toString() || "N/A"}
-                                    </TableCell>
-                                ))}
+                                {Object.entries(row)
+                                    .filter(([key]) => !["id", "Id", "_id"].includes(key.toLowerCase())) // IDs rausfiltern
+                                    .map(([key, value]) => (
+                                        <TableCell key={key}>
+                                            <strong>{key}:</strong> {typeof value === "object" && value !== null ? JSON.stringify(value) : value?.toString() || "N/A"}
+                                        </TableCell>
+                                    ))}
                             </TableRow>
                         ))}
                     </TableBody>
