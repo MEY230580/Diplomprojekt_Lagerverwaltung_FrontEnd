@@ -56,8 +56,9 @@ export default function ReportPage() {
                 const result: ReportData = await response.json();
 
                 //Werte aus $values extrahieren, wenn vorhanden
-                const extractedData = Array.isArray(result.$values) ? result.$values : [];
+                const extractedData = Array.isArray(result) ? result : [];
 
+                console.log(extractedData);
                 //IDs aus den Daten entfernen ohne ESLint-Fehler
                 const filteredData = extractedData.map((item) =>
                     Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "Id", "_id", "$id"].includes(key.toLowerCase())))
