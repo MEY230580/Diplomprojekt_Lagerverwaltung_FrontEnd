@@ -104,7 +104,7 @@ export default function Page() {
                             onClick={handleRegister}
                             disabled={loading}
                         >
-                            {loading ? "Registering..." : "Register"}
+                            {loading ? "Registering..." : "register"}
                         </Button>
                     </Box>
                 </Box>
