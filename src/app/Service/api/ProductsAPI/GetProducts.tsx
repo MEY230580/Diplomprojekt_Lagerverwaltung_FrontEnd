@@ -33,12 +33,7 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
 
     useEffect(() => {
         fetch("http://localhost:5000/api/products")
-            .then(async (response) => {
-                if (!response.ok) throw new Error("Network response was not ok");
-                const text = await response.text();
-                if (!text) throw new Error("Empty response from /products");
-                return JSON.parse(text);
-            })
+            .then((response) => response.json())
             .then((data) => {
                 setProducts(data);
             })
@@ -49,15 +44,17 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/Base/user-role")
+        fetch("http://localhost:5000/api/roles/user-role")
             .then(async (response) => {
-                if (!response.ok) throw new Error("Network response was not ok");
                 const text = await response.text();
-                if (!text) throw new Error("Empty response from /roles/user-role");
-                return JSON.parse(text);
-            })
-            .then((data) => {
-                setRole(data);
+                console.log("Raw response:", text);
+                try {
+                    const data = JSON.parse(text);
+                    setRole(data);
+                } catch (e) {
+                    console.error("Failed to parse JSON:", e);
+                    setError("Failed to parse user role data.");
+                }
                 setLoading(false);
             })
             .catch((error) => {
