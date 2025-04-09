@@ -21,7 +21,7 @@ export default function ProductDetails() {
     useEffect(() => {
         if (!id) return;
 
-        fetch(`http://localhost:5100/api/Products/${id}`)
+        fetch(`http://localhost:5000/api/Products/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
@@ -36,7 +36,7 @@ export default function ProductDetails() {
     }, [id]);
 
     const handleDelete = () => {
-        fetch(`http://localhost:5100/api/Products/${id}`, {
+        fetch(`http://localhost:5000/api/Products/${id}`, {
             method: "DELETE",
         })
         .then((response) => {

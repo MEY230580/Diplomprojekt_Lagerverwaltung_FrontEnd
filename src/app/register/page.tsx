@@ -11,7 +11,7 @@ export default function Page() {
     const [registerError, setRegisterError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const apiUrl = "http://localhost:5100/api/auth/register";
+    const apiUrl = "http://localhost:5000/api/auth/register";
 
     const handleRegister = async () => {
         setLoading(true);

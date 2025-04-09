@@ -10,21 +10,21 @@ interface ReportData {
 
 //API endpoints mapping
 const reportApiMap: Record<string, string> = {
-    "AuditLogs": "http://localhost:5100/api/AuditLogs",
-    "low-stock-products": "http://localhost:5100/api/Reports/low-stock-products",
-    "movements-per-day": "http://localhost:5100/api/Reports/movements-per-day",
-    "restocks-per-period": "http://localhost:5100/api/Reports/restocks-per-period",
-    "stock-summary": "http://localhost:5100/api/Reports/stock-summary",
-    "top-restock-products": "http://localhost:5100/api/Reports/top-restock-products",
-    "get-movements": "http://localhost:5100/api/Movements",
-    "get-movements-all-warehouses": "http://localhost:5100/api/Movements/all-warehouses",
-    "movements-inventory-report": "http://localhost:5100/api/Movements/inventory-report",
-    "restock-all": "http://localhost:5100/api/restock/all",
-    "restock-pending": "http://localhost:5100/api/restock/pending",
-    "restock-request": "http://localhost:5100/api/restock/request",
+    "AuditLogs": "http://localhost:5000/api/AuditLogs",
+    "low-stock-products": "http://localhost:5000/api/Reports/low-stock-products",
+    "movements-per-day": "http://localhost:5000/api/Reports/movements-per-day",
+    "restocks-per-period": "http://localhost:5000/api/Reports/restocks-per-period",
+    "stock-summary": "http://localhost:5000/api/Reports/stock-summary",
+    "top-restock-products": "http://localhost:5000/api/Reports/top-restock-products",
+    "get-movements": "http://localhost:5000/api/Movements",
+    "get-movements-all-warehouses": "http://localhost:5000/api/Movements/all-warehouses",
+    "movements-inventory-report": "http://localhost:5000/api/Movements/inventory-report",
+    "restock-all": "http://localhost:5000/api/restock/all",
+    "restock-pending": "http://localhost:5000/api/restock/pending",
+    "restock-request": "http://localhost:5000/api/restock/request",
     //"movement-one-product": `http://localhost:5001/api/Movements/${id}`
-    //"restock-product-process": `http://localhost:5100/api/restock/${id}/process`
-    //"restock-one-product": `http://localhost:5100/api/restock/${id}`,
+    //"restock-product-process": `http://localhost:5000/api/restock/${id}/process`
+    //"restock-one-product": `http://localhost:5000/api/restock/${id}`,
 };
 
 export default function ReportPage() {

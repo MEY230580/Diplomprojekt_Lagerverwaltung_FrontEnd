@@ -6,7 +6,7 @@ export default function GetMovements() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5100/api/Reports/movements-per-day")
+        fetch("http://localhost:5000/api/Reports/movements-per-day")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
