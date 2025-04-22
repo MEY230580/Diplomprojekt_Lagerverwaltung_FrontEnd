@@ -3,17 +3,16 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 
-//Define an interface based on your API response structure
+// Define an interface based on your API response structure
 interface ReportData {
     [key: string]: string | number | boolean | null | object | object[];
 }
 
-//API endpoints mapping
+// API endpoints mapping
 const reportApiMap: Record<string, string> = {
-    "AuditLogs": "http://localhost:5000/api/AuditLogs",
-    "low-stock-products": "http://localhost:5000/api/Reports/low-stock-products",
+    "AuditLogs": "http://localhost:5000/api/audit-logs",
     "movements-per-day": "http://localhost:5000/api/Reports/movements-per-day",
-    "restocks-per-period": "http://localhost:5000/api/Reports/restocks-per-period",
+    "restocks-per-period": "http://localhost:5000/api/Reports/restocks-by-period",
     "stock-summary": "http://localhost:5000/api/Reports/stock-summary",
     "top-restock-products": "http://localhost:5000/api/Reports/top-restock-products",
     "get-movements": "http://localhost:5000/api/Movements",
@@ -22,9 +21,9 @@ const reportApiMap: Record<string, string> = {
     "restock-all": "http://localhost:5000/api/restock/all",
     "restock-pending": "http://localhost:5000/api/restock/pending",
     "restock-request": "http://localhost:5000/api/restock/request",
-    //"movement-one-product": `http://localhost:5001/api/Movements/${id}`
-    //"restock-product-process": `http://localhost:5000/api/restock/${id}/process`
-    //"restock-one-product": `http://localhost:5000/api/restock/${id}`,
+    // "movement-one-product": `http://localhost:5001/api/Movements/${id}`
+    // "restock-product-process": `http://localhost:5000/api/restock/${id}/process`
+    // "restock-one-product": `http://localhost:5000/api/restock/${id}`,
 };
 
 export default function ReportPage() {
@@ -55,11 +54,8 @@ export default function ReportPage() {
                 if (!response.ok) throw new Error("Failed to fetch data");
                 const result: ReportData = await response.json();
 
-                //Werte aus $values extrahieren, wenn vorhanden
                 const extractedData = Array.isArray(result) ? result : [];
 
-                console.log(extractedData);
-                //IDs aus den Daten entfernen ohne ESLint-Fehler
                 const filteredData = extractedData.map((item) =>
                     Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "Id", "_id", "$id"].includes(key.toLowerCase())))
                 );
@@ -72,13 +68,19 @@ export default function ReportPage() {
             }
         };
 
-
         fetchData();
     }, [report]);
 
     if (!report) return <Typography align="center">No report selected.</Typography>;
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
     if (error) return <Typography color="error" align="center">⚠ {error} ⚠</Typography>;
+    if (data.length === 0) {
+        return (
+            <Typography variant="h6" align="center" sx={{ mt: 4 }}>
+                No reports available.
+            </Typography>
+        );
+    }
 
     return (
         <div>
@@ -91,7 +93,7 @@ export default function ReportPage() {
                         <TableRow>
                             {data.length > 0 &&
                                 Object.keys(data[0])
-                                    .filter(column => !["id", "Id", "_id"].includes(column.toLowerCase())) // IDs rausfiltern
+                                    .filter(column => !["id", "Id", "_id"].includes(column.toLowerCase()))
                                     .map((column) => (
                                         <TableCell key={column}><strong>{column.toUpperCase()}</strong></TableCell>
                                     ))}
@@ -101,7 +103,7 @@ export default function ReportPage() {
                         {data.map((row, index) => (
                             <TableRow key={index}>
                                 {Object.entries(row)
-                                    .filter(([key]) => !["id", "Id", "_id"].includes(key.toLowerCase())) // IDs rausfiltern
+                                    .filter(([key]) => !["id", "Id", "_id"].includes(key.toLowerCase()))
                                     .map(([key, value]) => (
                                         <TableCell key={key}>
                                             <strong>{key}:</strong> {typeof value === "object" && value !== null ? JSON.stringify(value) : value?.toString() || "N/A"}

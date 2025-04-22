@@ -5,26 +5,28 @@ import { useParams } from "next/navigation";
 import useFetch from "@/app/hooks/useFetch";
 import * as React from "react";
 
-interface Warehouse {
-    id: number;
+interface Product {
+    id: string;
     name: string;
-    location: string;
-    products: string[];
+    quantity: number;
+    minimumStock: number;
+    warehouseId: string;
+    warehouseName: string;
+    unit: string | null;
 }
 
 export default function LocationChange() {
     const { id } = useParams();
-
-    const apiUrl = `http://localhost:5000/api/Warehouse/products/${id}`; // ✅ Add 'http://'
-    // ✅ Fixed template string
+    const apiUrl = `http://localhost:5000/api/Warehouse/products/${id}`;
     const { data, loading, error } = useFetch(apiUrl);
+
     if (!id) return <Typography color="error">Invalid warehouse ID</Typography>;
-
-    // ✅ Convert 'data' to Warehouse type or set it to null if not valid
-    const warehouse: Warehouse | null = data as Warehouse | null;
-
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
-    if (error) return <Typography color="error">⚠ {error.message} ⚠</Typography>; // ✅ Fixed error display
+    if (error) return <Typography color="error">⚠ {error.message} ⚠</Typography>;
+
+    const products = data as Product[] || [];
+
+    const warehouseName = products.length > 0 ? products[0].warehouseName : "Unknown Warehouse";
 
     return (
         <>
@@ -32,12 +34,14 @@ export default function LocationChange() {
             <Container maxWidth="sm">
                 <CssBaseline />
                 <Box sx={{ mt: 20, textAlign: "center" }}>
-                    <Typography variant="h4">{warehouse?.name || "Unknown Warehouse"}</Typography>
-                    <Typography variant="h6" sx={{ mt: 2 }}>Location: {warehouse?.location || "Unknown"}</Typography>
+                    <Typography variant="h4">{warehouseName}</Typography>
+                    <Typography variant="h6" sx={{ mt: 2 }}>Location: Unknown</Typography> {/* Replace if location becomes available */}
                     <Box sx={{ mt: 2 }}>
-                        {warehouse?.products?.length ? (
-                            warehouse.products.map((product: string, index: number) => (
-                                <Typography key={index} variant="body1">{product}</Typography>
+                        {products.length ? (
+                            products.map((product: Product) => (
+                                <Typography key={product.id} variant="body1">
+                                    {product.name} — Qty: {product.quantity}
+                                </Typography>
                             ))
                         ) : (
                             <Typography variant="body1">No products available</Typography>

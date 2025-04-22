@@ -18,9 +18,6 @@ export default function Page() {
                 <Button variant="contained" onClick={() => navigateToReport("AuditLogs")}>
                     Logs
                 </Button>
-                <Button variant="contained" onClick={() => navigateToReport("low-stock-products")}>
-                    Low Stock
-                </Button>
                 <Button variant="contained" onClick={() => navigateToReport("movements-per-day")}>
                     Movements Per Day
                 </Button>
