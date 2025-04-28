@@ -33,18 +33,29 @@ interface Product {
     unit: string | null;
 }
 
+const WAREHOUSE_A_ID = "11111111-1111-1111-1111-111111111111";
+const WAREHOUSE_B_ID = "22222222-2222-2222-2222-222222222222";
+
 export default function LocationChange() {
     const { id } = useParams();
     const router = useRouter();
-    const apiUrl = `http://localhost:5000/api/Warehouse/products/${id}`;
+    const apiUrl = `http://localhost:5002/api/Warehouse/products/${id}`;
     const { data, loading, error } = useFetch(apiUrl);
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [sortBy, setSortBy] = React.useState("name");
     const [openDialog, setOpenDialog] = React.useState(false);
+    const [openMoveDialog, setOpenMoveDialog] = React.useState(false);
+    const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false); // NEW STATE
     const [newName, setNewName] = React.useState("");
     const [newQuantity, setNewQuantity] = React.useState<number | "">("");
+    const [moveQuantity, setMoveQuantity] = React.useState<number | "">("");
+    const [updateQuantity, setUpdateQuantity] = React.useState<number | "">(""); // NEW STATE
+    const [selectedProductId, setSelectedProductId] = React.useState<string>("");
+    const [selectedUpdateProductId, setSelectedUpdateProductId] = React.useState<string>(""); // NEW STATE
     const [submitError, setSubmitError] = React.useState<string | null>(null);
+    const [moveError, setMoveError] = React.useState<string | null>(null);
+    const [updateError, setUpdateError] = React.useState<string | null>(null); // NEW STATE
 
     const products = (data as Product[]) || [];
     const warehouseName = products.length > 0 ? products[0].warehouseName : "Unknown Warehouse";
@@ -59,10 +70,12 @@ export default function LocationChange() {
         return 0;
     });
 
+    const destinationWarehouseId = id === WAREHOUSE_A_ID ? WAREHOUSE_B_ID : WAREHOUSE_A_ID;
+
     const handleAddProduct = async () => {
         setSubmitError(null);
         try {
-            const roleRes = await fetch("http://localhost:5000/api/Products/user-role");
+            const roleRes = await fetch("http://localhost:5002/api/Products/user-role");
             const roleData = await roleRes.json();
 
             if (!roleData.isManager) {
@@ -70,11 +83,9 @@ export default function LocationChange() {
                 return;
             }
 
-            const res = await fetch("http://localhost:5000/api/Products", {
+            const res = await fetch("http://localhost:5002/api/Products", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: newName,
                     quantity: Number(newQuantity),
@@ -87,12 +98,106 @@ export default function LocationChange() {
             setOpenDialog(false);
             setNewName("");
             setNewQuantity("");
-            window.location.reload(); // refresh to show new product
+            window.location.reload();
         } catch (err) {
             if (err instanceof Error) {
                 setSubmitError(err.message);
             } else {
                 setSubmitError("Something went wrong.");
+            }
+        }
+    };
+
+    const submitMove = async () => {
+        const selectedProduct = products.find((p) => p.id === selectedProductId);
+        if (!selectedProduct || moveQuantity === "" || moveQuantity <= 0) {
+            setMoveError("Please select a product and enter a valid quantity.");
+            return;
+        }
+
+        if (moveQuantity > selectedProduct.quantity) {
+            setMoveError("Cannot move more than available stock.");
+            return;
+        }
+
+        try {
+            await fetch("http://localhost:5002/api/movements/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: crypto.randomUUID(),
+                    productId: selectedProduct.id,
+                    productName: selectedProduct.name,
+                    fromWarehouseId: id,
+                    toWarehouseId: destinationWarehouseId,
+                    quantity: moveQuantity,
+                    movementsDate: new Date().toISOString(),
+                }),
+            });
+
+            await fetch("http://localhost:5002/api/movements/update-stock", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    productId: selectedProduct.id,
+                    quantity: -moveQuantity,
+                    movementType: "Move",
+                    user: "system",
+                }),
+            });
+
+            setOpenMoveDialog(false);
+            setSelectedProductId("");
+            setMoveQuantity("");
+            window.location.reload();
+        } catch (err) {
+            if (err instanceof Error) {
+                setMoveError(err.message);
+            } else {
+                setMoveError("Something went wrong during the move.");
+            }
+        }
+    };
+
+    const handleUpdateProduct = async () => {
+        const product = products.find((p) => p.id === selectedUpdateProductId);
+        if (!product || updateQuantity === "" || updateQuantity < 0) {
+            setUpdateError("Please select a product and a valid quantity.");
+            return;
+        }
+
+        const newTotalQuantity = product.quantity + Number(updateQuantity);
+        if (newTotalQuantity < 0) {
+            setUpdateError("Quantity cannot be less than 0.");
+            return;
+        }
+
+        const updatedProduct = {
+            name: product.name,
+            quantity: newTotalQuantity,
+            minimumStock: product.minimumStock,
+            unit: product.unit || "units",
+        };
+
+        try {
+            console.log("Updating product", selectedUpdateProductId, "with updated data:", updatedProduct);
+            const res = await fetch(`http://localhost:5002/api/Products/update-product?productId=${selectedUpdateProductId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedProduct),
+            });
+
+            if (!res.ok) throw new Error("Failed to update product.");
+
+            setOpenUpdateDialog(false);
+            setSelectedUpdateProductId("");
+            setUpdateQuantity("");
+            window.location.reload();
+        } catch (err) {
+            if (err instanceof Error) {
+                setUpdateError(err.message);
+            } else {
+                setUpdateError("Something went wrong.");
             }
         }
     };
@@ -122,6 +227,12 @@ export default function LocationChange() {
                     >
                         <Button variant="outlined" onClick={() => setOpenDialog(true)}>
                             Add New Product
+                        </Button>
+                        <Button variant="outlined" onClick={() => setOpenUpdateDialog(true)}>
+                            Update Product
+                        </Button>
+                        <Button variant="outlined" onClick={() => setOpenMoveDialog(true)}>
+                            Move Product
                         </Button>
                         <TextField
                             size="small"
@@ -198,6 +309,92 @@ export default function LocationChange() {
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
                     <Button variant="contained" onClick={handleAddProduct} disabled={!newName || !newQuantity}>
                         Submit
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Move Product Dialog */}
+            <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)}>
+                <DialogTitle>Move Product</DialogTitle>
+                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Select Product</InputLabel>
+                        <Select
+                            value={selectedProductId}
+                            label="Select Product"
+                            onChange={(e) => setSelectedProductId(e.target.value)}
+                        >
+                            {products.map((product) => (
+                                <MenuItem key={product.id} value={product.id}>
+                                    {product.name} (Available: {product.quantity})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField
+                        label="Quantity to Move"
+                        type="number"
+                        value={moveQuantity}
+                        onChange={(e) => setMoveQuantity(Number(e.target.value))}
+                        fullWidth
+                    />
+                    {moveError && (
+                        <Typography color="error" variant="body2">
+                            ⚠ {moveError}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenMoveDialog(false)}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={submitMove}
+                        disabled={!selectedProductId || !moveQuantity || moveQuantity <= 0}
+                    >
+                        Move
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Update Product Dialog */}
+            <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
+                <DialogTitle>Update Product Quantity</DialogTitle>
+                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Select Product</InputLabel>
+                        <Select
+                            value={selectedUpdateProductId}
+                            label="Select Product"
+                            onChange={(e) => setSelectedUpdateProductId(e.target.value)}
+                        >
+                            {products.map((product) => (
+                                <MenuItem key={product.id} value={product.id}>
+                                    {product.name} (Current: {product.quantity})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField
+                        label="Quantity to Add"
+                        type="number"
+                        value={updateQuantity}
+                        onChange={(e) => setUpdateQuantity(Number(e.target.value))}
+                        fullWidth
+                    />
+                    {updateError && (
+                        <Typography color="error" variant="body2">
+                            ⚠ {updateError}
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenUpdateDialog(false)}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleUpdateProduct}
+                        disabled={!selectedUpdateProductId || updateQuantity === ""}
+                    >
+                        Update
                     </Button>
                 </DialogActions>
             </Dialog>

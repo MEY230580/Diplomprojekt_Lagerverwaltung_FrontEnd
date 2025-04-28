@@ -17,7 +17,7 @@ interface Product {
 
 export default function LocationChange() {
     const { id } = useParams();
-    const apiUrl = `http://localhost:5000/api/Warehouse/products/${id}`;
+    const apiUrl = `http://localhost:5002/api/Warehouse/products/${id}`;
     const { data, loading, error } = useFetch(apiUrl);
 
     if (!id) return <Typography color="error">Invalid warehouse ID</Typography>;

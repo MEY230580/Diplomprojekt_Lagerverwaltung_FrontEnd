@@ -6,7 +6,7 @@ export default function GetMovements() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/Movements")
+        fetch("http://localhost:5002/api/Movements")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);

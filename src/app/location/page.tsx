@@ -17,7 +17,7 @@ export default function Page() {
     const router = useRouter();
     const { darkMode } = useTheme();
 
-    const apiUrl = 'http://localhost:5000/api/Warehouse';
+    const apiUrl = 'http://localhost:5002/api/Warehouse';
     const { data, loading, error } = useFetch(apiUrl);
 
     if (loading) {

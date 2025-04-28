@@ -35,7 +35,7 @@ export default function ProductDetails() {
     useEffect(() => {
         if (!id) return;
 
-        fetch(`http://localhost:5000/api/Products/${id}`)
+        fetch(`http://localhost:5002/api/Products/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
@@ -50,8 +50,20 @@ export default function ProductDetails() {
     }, [id]);
 
     const handleDelete = () => {
-        fetch(`http://localhost:5000/api/Products/${id}`, {
+        const token = localStorage.getItem("token"); // <-- get token from localStorage
+
+        if (!token) {
+            alert("You must be logged in to delete a product!");
+            router.push("/login"); // Optional: redirect to login page if not logged in
+            return;
+        }
+
+        fetch(`http://localhost:5002/api/Products/${id}`, {
             method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
         })
             .then((response) => {
                 if (!response.ok) {
@@ -84,7 +96,7 @@ export default function ProductDetails() {
             unit: product.unit || "units",
         };
 
-        fetch(`http://localhost:5000/api/Products/update-product?productId=${id}`, {
+        fetch(`http://localhost:5002/api/Products/update-product?productId=${id}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

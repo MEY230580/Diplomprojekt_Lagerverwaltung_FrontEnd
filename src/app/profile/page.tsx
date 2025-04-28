@@ -10,7 +10,11 @@ import {
     Modal,
     List,
     ListItem,
-    ListItemText
+    ListItemText,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/Sidebar";
@@ -18,6 +22,7 @@ import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
 
 // Define the Product type
 type Product = {
+    id: number;  // Added 'id' to be able to send in POST
     name: string;
     stock: number;
 };
@@ -41,6 +46,11 @@ export default function Page() {
     const [modalOpen, setModalOpen] = useState(false);
     const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
 
+    // New states for Restock Request
+    const [restockModalOpen, setRestockModalOpen] = useState(false);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+
     const handleLogout = () => {
         localStorage.removeItem("authToken");
         router.push("/login");
@@ -54,14 +64,61 @@ export default function Page() {
         setModalOpen(false);
     };
 
+    const handleOpenRestockModal = () => {
+        setRestockModalOpen(true);
+    };
+
+    const handleCloseRestockModal = () => {
+        setRestockModalOpen(false);
+        setSelectedProductId(null);
+    };
+
+    const fetchProducts = () => {
+        fetch("http://localhost:5002/api/Products")
+            .then(res => res.json())
+            .then(data => setProducts(data))
+            .catch(err => console.error("Error fetching products:", err));
+    };
+
+    const handleRestockRequest = () => {
+        if (selectedProductId !== null) {
+            fetch("http://localhost:5002/api/RestockQueue/request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ productId: selectedProductId }),
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to request restock");
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Restock requested:", data);
+                    handleCloseRestockModal();
+                    alert("Restock requested successfully!");
+                })
+                .catch(err => {
+                    console.error("Error requesting restock:", err);
+                    alert("Failed to request restock.");
+                });
+        }
+    };
+
     useEffect(() => {
         if (modalOpen) {
-            fetch("http://localhost:5000/api/Products/low-stock")
+            fetch("http://localhost:5002/api/Products/low-stock")
                 .then(res => res.json())
                 .then(data => setLowStockProducts(data))
                 .catch(err => console.error("Error fetching low stock products:", err));
         }
     }, [modalOpen]);
+
+    useEffect(() => {
+        if (restockModalOpen) {
+            fetchProducts();
+        }
+    }, [restockModalOpen]);
 
     return (
         <>
@@ -123,6 +180,31 @@ export default function Page() {
                 </CardContent>
             </Card>
 
+            {/* NEW Request Restock Card */}
+            <Card sx={{ maxWidth: 600, margin: "auto", mt: 4, padding: 2, height: 150 }}>
+                <CardContent sx={{ height: "100%" }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "100%",
+                        }}
+                    >
+                        <Button
+                            variant="contained"
+                            onClick={handleOpenRestockModal}
+                            sx={{
+                                backgroundColor: "#b3d9ff",
+                                color: "#000",
+                                "&:hover": { backgroundColor: "#99ccff" }
+                            }}
+                        >
+                            Request Restock
+                        </Button>
+                    </Box>
+                </CardContent>
+            </Card>
 
             {/* Modal for Low Stock Products */}
             <Modal open={modalOpen} onClose={handleCloseModal}>
@@ -144,6 +226,39 @@ export default function Page() {
                     ) : (
                         <Typography>No low stock products found.</Typography>
                     )}
+                </Box>
+            </Modal>
+
+            {/* Modal for Requesting Restock */}
+            <Modal open={restockModalOpen} onClose={handleCloseRestockModal}>
+                <Box sx={modalStyle}>
+                    <Typography variant="h6" gutterBottom>
+                        Request Product Restock
+                    </Typography>
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel id="select-product-label">Select Product</InputLabel>
+                        <Select
+                            labelId="select-product-label"
+                            value={selectedProductId ?? ""}
+                            label="Select Product"
+                            onChange={(e) => setSelectedProductId(Number(e.target.value))}
+                        >
+                            {products.map((product) => (
+                                <MenuItem key={product.id} value={product.id}>
+                                    {product.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ mt: 3 }}
+                        onClick={handleRestockRequest}
+                        disabled={selectedProductId === null}
+                    >
+                        Submit Request
+                    </Button>
                 </Box>
             </Modal>
         </>

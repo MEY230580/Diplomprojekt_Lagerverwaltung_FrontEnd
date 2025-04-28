@@ -26,7 +26,7 @@ export default function Home() {
             ) : (
                 <>
                     <TopBar />
-                    <GetProducts searchQuery={searchQuery} sortBy={sortBy} selectedLocation={selectedLocation} />
+                    <GetProducts searchQuery={searchQuery} sortBy={sortBy} />
                 </>
             )}
         </div>

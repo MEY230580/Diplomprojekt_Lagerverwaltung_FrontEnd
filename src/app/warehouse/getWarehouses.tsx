@@ -16,7 +16,7 @@ export default function GetWarehouses() {
     const { darkMode } = useTheme();
     const router = useRouter();
 
-    const apiUrl = "http://localhost:5000/api/Warehouse";
+    const apiUrl = "http://localhost:5002/api/Warehouse";
     const { data, loading, error } = useFetch(apiUrl);
     const warehouses: Warehouse[] = Array.isArray(data) ? data : [];
     if (loading) return <p>Loading...</p>;

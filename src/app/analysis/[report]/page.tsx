@@ -10,20 +10,20 @@ interface ReportData {
 
 // API endpoints mapping
 const reportApiMap: Record<string, string> = {
-    "AuditLogs": "http://localhost:5000/api/audit-logs",
-    "movements-per-day": "http://localhost:5000/api/Reports/movements-per-day",
-    "restocks-per-period": "http://localhost:5000/api/Reports/restocks-by-period",
-    "stock-summary": "http://localhost:5000/api/Reports/stock-summary",
-    "top-restock-products": "http://localhost:5000/api/Reports/top-restock-products",
-    "get-movements": "http://localhost:5000/api/Movements",
-    "get-movements-all-warehouses": "http://localhost:5000/api/Movements/all-warehouses",
-    "movements-inventory-report": "http://localhost:5000/api/Movements/inventory-report",
-    "restock-all": "http://localhost:5000/api/restock/all",
-    "restock-pending": "http://localhost:5000/api/restock/pending",
-    "restock-request": "http://localhost:5000/api/restock/request",
+    "AuditLogs": "http://localhost:5002/api/audit-logs",
+    "movements-per-day": "http://localhost:5002/api/Reports/movements-per-day",
+    "restocks-per-period": "http://localhost:5002/api/Reports/restocks-by-period",
+    "stock-summary": "http://localhost:5002/api/Reports/stock-summary",
+    "top-restock-products": "http://localhost:5002/api/Reports/top-restock-products",
+    "get-movements": "http://localhost:5002/api/Movements",
+    "get-movements-all-warehouses": "http://localhost:5002/api/Movements/all-warehouses",
+    "movements-inventory-report": "http://localhost:5002/api/Movements/inventory-report",
+    "restock-all": "http://localhost:5002/api/restock/all",
+    "restock-pending": "http://localhost:5002/api/restock/pending",
+    "restock-request": "http://localhost:5002/api/restock/request",
     // "movement-one-product": `http://localhost:5001/api/Movements/${id}`
-    // "restock-product-process": `http://localhost:5000/api/restock/${id}/process`
-    // "restock-one-product": `http://localhost:5000/api/restock/${id}`,
+    // "restock-product-process": `http://localhost:5002/api/restock/${id}/process`
+    // "restock-one-product": `http://localhost:5002/api/restock/${id}`,
 };
 
 export default function ReportPage() {
