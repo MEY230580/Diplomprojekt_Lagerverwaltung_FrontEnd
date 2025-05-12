@@ -39,7 +39,7 @@ const WAREHOUSE_B_ID = "22222222-2222-2222-2222-222222222222";
 export default function LocationChange() {
     const { id } = useParams();
     const router = useRouter();
-    const apiUrl = `http://localhost:5002/api/Warehouse/products/${id}`;
+    const apiUrl = `http://localhost/api/Warehouse/products/${id}`;
     const { data, loading, error } = useFetch(apiUrl);
 
     const [searchQuery, setSearchQuery] = React.useState("");
@@ -75,7 +75,7 @@ export default function LocationChange() {
     const handleAddProduct = async () => {
         setSubmitError(null);
         try {
-            const roleRes = await fetch("http://localhost:5002/api/Products/user-role");
+            const roleRes = await fetch("http://localhost/api/Products/user-role");
             const roleData = await roleRes.json();
 
             if (!roleData.isManager) {
@@ -83,7 +83,7 @@ export default function LocationChange() {
                 return;
             }
 
-            const res = await fetch("http://localhost:5002/api/Products", {
+            const res = await fetch("http://localhost/api/Products", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -121,7 +121,7 @@ export default function LocationChange() {
         }
 
         try {
-            await fetch("http://localhost:5002/api/movements/create", {
+            await fetch("http://localhost/api/movements/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -135,7 +135,7 @@ export default function LocationChange() {
                 }),
             });
 
-            await fetch("http://localhost:5002/api/movements/update-stock", {
+            await fetch("http://localhost/api/movements/update-stock", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -181,7 +181,7 @@ export default function LocationChange() {
 
         try {
             console.log("Updating product", selectedUpdateProductId, "with updated data:", updatedProduct);
-            const res = await fetch(`http://localhost:5002/api/Products/update-product?productId=${selectedUpdateProductId}`, {
+            const res = await fetch(`http://localhost/api/Products/update-product?productId=${selectedUpdateProductId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedProduct),

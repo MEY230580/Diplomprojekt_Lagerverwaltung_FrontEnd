@@ -1,33 +1,52 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { LockOutlined } from "@mui/icons-material";
-import { Container, CssBaseline, Box, Avatar, Typography, TextField, Button } from "@mui/material";
+import {
+    Container,
+    CssBaseline,
+    Box,
+    Avatar,
+    Typography,
+    TextField,
+    Button,
+} from "@mui/material";
 import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/app/firebase"; // Make sure this path is correct
 
-export default function Page() {
-    const [username, setUsername] = useState("");
+export default function LoginPage() {
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
     const handleLogIn = async () => {
         try {
-            const response = await fetch("http://localhost:5002/api/auth/login", {
+            // Step 1: Firebase authentication
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const idToken = await userCredential.user.getIdToken();
+
+            // Step 2: Send token to backend for verification
+            const response = await fetch("http://localhost/api/auth/verify-firebase-token", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ idToken }),
             });
 
             if (!response.ok) {
-                throw new Error("Invalid credentials");
+                const text = await response.text();
+                console.error("Backend error:", text);
+                throw new Error("Token verification failed");
             }
 
-            const data = await response.json();
-            localStorage.setItem("authToken", data.token);
-            router.push("/"); // Redirect to the main page
-        } catch (error) {
-            console.error("Login error:", error);
-            setError(error instanceof Error ? error.message : "An unknown error occurred.");
+            // Optional: Store token or user data
+            localStorage.setItem("authToken", idToken);
+
+            // Redirect
+            router.push("/");
+        } catch (err) {
+            console.error("Login error:", err);
+            setError(err instanceof Error ? err.message : "An unknown error occurred.");
         }
     };
 
@@ -46,9 +65,9 @@ export default function Page() {
                             margin="normal"
                             required
                             fullWidth
-                            label="Username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            label="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                         />
                         <TextField
                             margin="normal"

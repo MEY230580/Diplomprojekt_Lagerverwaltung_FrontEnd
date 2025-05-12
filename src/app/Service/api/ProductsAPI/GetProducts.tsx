@@ -32,7 +32,7 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
     const router = useRouter();
 
     useEffect(() => {
-        fetch("http://localhost:5002/api/products")
+        fetch("http://localhost/api/products")
             .then((response) => response.json())
             .then((data) => {
                 setProducts(data);
@@ -44,7 +44,7 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
     }, []);
 
     useEffect(() => {
-        fetch("http://localhost:5002/api/roles/user-role")
+        fetch("http://localhost/api/roles/user-role")
             .then(async (response) => {
                 const text = await response.text();
                 console.log("Raw response:", text);
@@ -77,7 +77,7 @@ export default function GetProducts({ searchQuery, sortBy }: GetProductsProps) {
     const handleAddProduct = async () => {
         setIsSubmitting(true);
         try {
-            const response = await fetch("http://localhost:5002/api/Products", {
+            const response = await fetch("http://localhost/api/Products", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

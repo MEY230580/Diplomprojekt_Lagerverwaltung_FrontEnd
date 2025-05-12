@@ -11,7 +11,7 @@ export default function GetRestocks() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5002/api/restock/request")
+        fetch("http://localhost/api/restock/request")
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data); // Debugging

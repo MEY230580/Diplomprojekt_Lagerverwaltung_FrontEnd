@@ -74,7 +74,7 @@ export default function Page() {
     };
 
     const fetchProducts = () => {
-        fetch("http://localhost:5002/api/Products")
+        fetch("http://localhost/api/Products")
             .then(res => res.json())
             .then(data => setProducts(data))
             .catch(err => console.error("Error fetching products:", err));
@@ -82,7 +82,7 @@ export default function Page() {
 
     const handleRestockRequest = () => {
         if (selectedProductId !== null) {
-            fetch("http://localhost:5002/api/RestockQueue/request", {
+            fetch("http://localhost/api/RestockQueue/request", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -107,7 +107,7 @@ export default function Page() {
 
     useEffect(() => {
         if (modalOpen) {
-            fetch("http://localhost:5002/api/Products/low-stock")
+            fetch("http://localhost/api/Products/low-stock")
                 .then(res => res.json())
                 .then(data => setLowStockProducts(data))
                 .catch(err => console.error("Error fetching low stock products:", err));
@@ -239,7 +239,7 @@ export default function Page() {
                         <InputLabel id="select-product-label">Select Product</InputLabel>
                         <Select
                             labelId="select-product-label"
-                            value={selectedProductId ?? ""}
+                            value={selectedProductId ?? ""}  // Ensure it defaults to an empty string if null
                             label="Select Product"
                             onChange={(e) => setSelectedProductId(Number(e.target.value))}
                         >

@@ -35,7 +35,7 @@ export default function ProductDetails() {
     useEffect(() => {
         if (!id) return;
 
-        fetch(`http://localhost:5002/api/Products/${id}`)
+        fetch(`http://localhost/api/Products/${id}`)
             .then((response) => response.json())
             .then((data) => {
                 console.log("API Response:", data);
@@ -58,7 +58,7 @@ export default function ProductDetails() {
             return;
         }
 
-        fetch(`http://localhost:5002/api/Products/${id}`, {
+        fetch(`http://localhost/api/Products/${id}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -96,7 +96,7 @@ export default function ProductDetails() {
             unit: product.unit || "units",
         };
 
-        fetch(`http://localhost:5002/api/Products/update-product?productId=${id}`, {
+        fetch(`http://localhost/api/Products/update-product?productId=${id}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
