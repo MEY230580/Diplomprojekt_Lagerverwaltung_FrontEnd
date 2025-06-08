@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -10,9 +11,10 @@ import {
     TextField,
     Stack,
     Modal,
-    Box
+    Box,
 } from "@mui/material";
 import Sidebar from "@/app/components/Sidebar";
+import { getAuthHeader } from "@/app/services/getAuthHeader";
 
 interface Product {
     id: number;
@@ -35,57 +37,59 @@ export default function ProductDetails() {
     useEffect(() => {
         if (!id) return;
 
-        fetch(`http://localhost/api/Products/${id}`)
-            .then((response) => response.json())
-            .then((data) => {
-                console.log("API Response:", data);
+        const fetchProduct = async () => {
+            try {
+                const headers = await getAuthHeader();
+
+                const response = await fetch(`http://localhost/api/Products/${id}`, {
+                    headers,
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Fehler beim Laden: ${response.status} - ${text}`);
+                }
+
+                const data = await response.json();
                 setProduct(data);
+            } catch (err) {
+                console.error("❌ Fehler beim Produktabruf:", err);
+                setError(err instanceof Error ? err.message : "Unbekannter Fehler");
+            } finally {
                 setLoading(false);
-            })
-            .catch((error) => {
-                console.error("Error retrieving data:", error);
-                setError(error.message);
-                setLoading(false);
-            });
+            }
+        };
+
+        fetchProduct();
     }, [id]);
 
-    const handleDelete = () => {
-        const token = localStorage.getItem("token"); // <-- get token from localStorage
+    const handleDelete = async () => {
+        try {
+            const headers = await getAuthHeader();
 
-        if (!token) {
-            alert("You must be logged in to delete a product!");
-            router.push("/login"); // Optional: redirect to login page if not logged in
-            return;
-        }
-
-        fetch(`http://localhost/api/Products/${id}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Error deleting product");
-                }
-                return response.json();
-            })
-            .then(() => {
-                alert(`Product deleted successfully`);
-                router.push("/");
-            })
-            .catch((error) => {
-                console.error("Error deleting product:", error);
-                setError(error.message);
+            const response = await fetch(`http://localhost/api/Products/${id}`, {
+                method: "DELETE",
+                headers,
             });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Fehler beim Löschen: ${response.status} - ${text}`);
+            }
+
+            alert("Produkt erfolgreich gelöscht.");
+            router.push("/");
+        } catch (err) {
+            console.error("❌ Fehler beim Löschen:", err);
+            setError(err instanceof Error ? err.message : "Unbekannter Fehler beim Löschen");
+        }
     };
 
-    const handleTakeOut = () => {
+    const handleTakeOut = async () => {
         if (!product) return;
 
         if (takeAmount <= 0 || takeAmount > product.quantity) {
-            alert("Invalid quantity to take out");
+            alert("Ungültige Entnahmemenge");
             return;
         }
 
@@ -96,41 +100,43 @@ export default function ProductDetails() {
             unit: product.unit || "units",
         };
 
-        fetch(`http://localhost/api/Products/update-product?productId=${id}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(updatedProduct),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error("Failed to update product");
+        try {
+            const headers = await getAuthHeader();
+
+            const response = await fetch(
+                `http://localhost/api/Products/update-product?productId=${id}`,
+                {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(updatedProduct),
                 }
-                return response.json();
-            })
-            .then(() => {
-                alert("Product updated successfully");
-                setProduct((prev) =>
-                    prev ? { ...prev, quantity: updatedProduct.quantity } : null
-                );
-                setTakeAmount(0);
-            })
-            .catch((error) => {
-                console.error("Error updating product:", error);
-                setError(error.message);
-            });
+            );
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Fehler beim Aktualisieren: ${response.status} - ${text}`);
+            }
+
+            alert("Produkt erfolgreich aktualisiert.");
+            setProduct((prev) =>
+                prev ? { ...prev, quantity: updatedProduct.quantity } : null
+            );
+            setTakeAmount(0);
+        } catch (err) {
+            console.error("❌ Fehler beim Aktualisieren:", err);
+            setError(err instanceof Error ? err.message : "Unbekannter Fehler beim Aktualisieren");
+        }
     };
 
     if (loading) {
-        return (
-            <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
-        );
+        return <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />;
     }
 
     if (error) {
         return (
-            <Typography color="error" align="center">⚠ {error} ⚠</Typography>
+            <Typography color="error" align="center">
+                ⚠ {error} ⚠
+            </Typography>
         );
     }
 
@@ -139,9 +145,15 @@ export default function ProductDetails() {
             <Sidebar />
             <Card sx={{ maxWidth: 600, margin: "auto", mt: 4, padding: 2 }}>
                 <CardContent>
-                    <Typography variant="h4" gutterBottom>{product?.name}</Typography>
-                    <Typography variant="body1">Quantity: {product?.quantity}</Typography>
-                    <Typography variant="body1">Location: {product?.location}</Typography>
+                    <Typography variant="h4" gutterBottom>
+                        {product?.name}
+                    </Typography>
+                    <Typography variant="body1">
+                        Quantity: {product?.quantity}
+                    </Typography>
+                    <Typography variant="body1">
+                        Location: {product?.location}
+                    </Typography>
 
                     <Stack spacing={2} mt={3}>
                         <Button
@@ -201,7 +213,9 @@ export default function ProductDetails() {
                             }}
                             variant="contained"
                             color="primary"
-                            disabled={takeAmount <= 0 || takeAmount > (product?.quantity ?? 0)}
+                            disabled={
+                                takeAmount <= 0 || takeAmount > (product?.quantity ?? 0)
+                            }
                         >
                             Confirm
                         </Button>

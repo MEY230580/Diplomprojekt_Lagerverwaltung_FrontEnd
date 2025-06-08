@@ -26,7 +26,6 @@ import { getAuthHeader } from "@/app/services/getAuthHeader";
 import { getIdTokenResult } from "firebase/auth";
 import { auth } from "@/app/services/firebase";
 
-
 interface Product {
     id: string;
     name: string;
@@ -41,27 +40,6 @@ const WAREHOUSE_A_ID = "11111111-1111-1111-1111-111111111111";
 const WAREHOUSE_B_ID = "22222222-2222-2222-2222-222222222222";
 
 export default function LocationChange() {
-    React.useEffect(() => {
-        const checkUserRole = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                const tokenResult = await getIdTokenResult(user, true); // true = force refresh
-                console.log("🎭 Firebase Custom Claims:", tokenResult.claims);
-
-                if (!tokenResult.claims.role) {
-                    console.warn("⚠️ Kein 'role' Claim im Token gefunden");
-                } else {
-                    console.log("✅ Benutzerrolle:", tokenResult.claims.role);
-                }
-            } else {
-                console.warn("❌ Kein Benutzer angemeldet");
-            }
-        };
-
-        checkUserRole();
-    }, []);
-
-
     const { id } = useParams();
     const router = useRouter();
     const apiUrl = `http://localhost/api/Warehouse/products/${id}`;
@@ -82,19 +60,28 @@ export default function LocationChange() {
     const [moveError, setMoveError] = React.useState<string | null>(null);
     const [updateError, setUpdateError] = React.useState<string | null>(null);
 
+    // 🔍 Debug: Firebase Token Claims anzeigen
+    React.useEffect(() => {
+        const checkUserRole = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const tokenResult = await getIdTokenResult(user, true);
+                console.log("🎭 Firebase Custom Claims:", tokenResult.claims);
+            }
+        };
+        checkUserRole();
+    }, []);
+
     const products = (data as Product[]) || [];
     const warehouseName = products.length > 0 ? products[0].warehouseName : "Unknown Warehouse";
-
     const filteredProducts = products.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
     const sortedProducts = [...filteredProducts].sort((a, b) => {
         if (sortBy === "name") return a.name.localeCompare(b.name);
         if (sortBy === "quantity") return b.quantity - a.quantity;
         return 0;
     });
-
     const destinationWarehouseId = id === WAREHOUSE_A_ID ? WAREHOUSE_B_ID : WAREHOUSE_A_ID;
 
     const handleAddProduct = async () => {
@@ -107,9 +94,9 @@ export default function LocationChange() {
                 headers,
             });
             const roleData = await roleRes.json();
-            console.log(roleRes);
 
-            if (!roleData.isManager) {
+            const userRole = (roleData.role || "").toLowerCase();
+            if (userRole !== "manager") {
                 setSubmitError("Only managers can add products.");
                 return;
             }
@@ -247,15 +234,9 @@ export default function LocationChange() {
                             mb: 4,
                         }}
                     >
-                        <Button variant="outlined" onClick={() => setOpenDialog(true)}>
-                            Add New Product
-                        </Button>
-                        <Button variant="outlined" onClick={() => setOpenUpdateDialog(true)}>
-                            Update Product
-                        </Button>
-                        <Button variant="outlined" onClick={() => setOpenMoveDialog(true)}>
-                            Move Product
-                        </Button>
+                        <Button variant="outlined" onClick={() => setOpenDialog(true)}>Add New Product</Button>
+                        <Button variant="outlined" onClick={() => setOpenUpdateDialog(true)}>Update Product</Button>
+                        <Button variant="outlined" onClick={() => setOpenMoveDialog(true)}>Move Product</Button>
                         <TextField
                             size="small"
                             placeholder="Search…"
