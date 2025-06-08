@@ -22,6 +22,10 @@ import Sidebar from "@/app/components/Sidebar";
 import { useParams, useRouter } from "next/navigation";
 import useFetch from "@/app/hooks/useFetch";
 import * as React from "react";
+import { getAuthHeader } from "@/app/services/getAuthHeader";
+import { getIdTokenResult } from "firebase/auth";
+import { auth } from "@/app/services/firebase";
+
 
 interface Product {
     id: string;
@@ -37,6 +41,27 @@ const WAREHOUSE_A_ID = "11111111-1111-1111-1111-111111111111";
 const WAREHOUSE_B_ID = "22222222-2222-2222-2222-222222222222";
 
 export default function LocationChange() {
+    React.useEffect(() => {
+        const checkUserRole = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const tokenResult = await getIdTokenResult(user, true); // true = force refresh
+                console.log("🎭 Firebase Custom Claims:", tokenResult.claims);
+
+                if (!tokenResult.claims.role) {
+                    console.warn("⚠️ Kein 'role' Claim im Token gefunden");
+                } else {
+                    console.log("✅ Benutzerrolle:", tokenResult.claims.role);
+                }
+            } else {
+                console.warn("❌ Kein Benutzer angemeldet");
+            }
+        };
+
+        checkUserRole();
+    }, []);
+
+
     const { id } = useParams();
     const router = useRouter();
     const apiUrl = `http://localhost/api/Warehouse/products/${id}`;
@@ -46,16 +71,16 @@ export default function LocationChange() {
     const [sortBy, setSortBy] = React.useState("name");
     const [openDialog, setOpenDialog] = React.useState(false);
     const [openMoveDialog, setOpenMoveDialog] = React.useState(false);
-    const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false); // NEW STATE
+    const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false);
     const [newName, setNewName] = React.useState("");
     const [newQuantity, setNewQuantity] = React.useState<number | "">("");
     const [moveQuantity, setMoveQuantity] = React.useState<number | "">("");
-    const [updateQuantity, setUpdateQuantity] = React.useState<number | "">(""); // NEW STATE
+    const [updateQuantity, setUpdateQuantity] = React.useState<number | "">("");
     const [selectedProductId, setSelectedProductId] = React.useState<string>("");
-    const [selectedUpdateProductId, setSelectedUpdateProductId] = React.useState<string>(""); // NEW STATE
+    const [selectedUpdateProductId, setSelectedUpdateProductId] = React.useState<string>("");
     const [submitError, setSubmitError] = React.useState<string | null>(null);
     const [moveError, setMoveError] = React.useState<string | null>(null);
-    const [updateError, setUpdateError] = React.useState<string | null>(null); // NEW STATE
+    const [updateError, setUpdateError] = React.useState<string | null>(null);
 
     const products = (data as Product[]) || [];
     const warehouseName = products.length > 0 ? products[0].warehouseName : "Unknown Warehouse";
@@ -75,8 +100,14 @@ export default function LocationChange() {
     const handleAddProduct = async () => {
         setSubmitError(null);
         try {
-            const roleRes = await fetch("http://localhost/api/Products/user-role");
+            const headers = await getAuthHeader();
+
+            const roleRes = await fetch("http://localhost/api/Products/user-role", {
+                method: "GET",
+                headers,
+            });
             const roleData = await roleRes.json();
+            console.log(roleRes);
 
             if (!roleData.isManager) {
                 setSubmitError("Only managers can add products.");
@@ -85,7 +116,7 @@ export default function LocationChange() {
 
             const res = await fetch("http://localhost/api/Products", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify({
                     name: newName,
                     quantity: Number(newQuantity),
@@ -100,11 +131,7 @@ export default function LocationChange() {
             setNewQuantity("");
             window.location.reload();
         } catch (err) {
-            if (err instanceof Error) {
-                setSubmitError(err.message);
-            } else {
-                setSubmitError("Something went wrong.");
-            }
+            setSubmitError(err instanceof Error ? err.message : "Something went wrong.");
         }
     };
 
@@ -121,9 +148,11 @@ export default function LocationChange() {
         }
 
         try {
+            const headers = await getAuthHeader();
+
             await fetch("http://localhost/api/movements/create", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify({
                     id: crypto.randomUUID(),
                     productId: selectedProduct.id,
@@ -137,7 +166,7 @@ export default function LocationChange() {
 
             await fetch("http://localhost/api/movements/update-stock", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify({
                     productId: selectedProduct.id,
                     quantity: -moveQuantity,
@@ -151,11 +180,7 @@ export default function LocationChange() {
             setMoveQuantity("");
             window.location.reload();
         } catch (err) {
-            if (err instanceof Error) {
-                setMoveError(err.message);
-            } else {
-                setMoveError("Something went wrong during the move.");
-            }
+            setMoveError(err instanceof Error ? err.message : "Something went wrong during the move.");
         }
     };
 
@@ -180,10 +205,11 @@ export default function LocationChange() {
         };
 
         try {
-            console.log("Updating product", selectedUpdateProductId, "with updated data:", updatedProduct);
+            const headers = await getAuthHeader();
+
             const res = await fetch(`http://localhost/api/Products/update-product?productId=${selectedUpdateProductId}`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify(updatedProduct),
             });
 
@@ -194,11 +220,7 @@ export default function LocationChange() {
             setUpdateQuantity("");
             window.location.reload();
         } catch (err) {
-            if (err instanceof Error) {
-                setUpdateError(err.message);
-            } else {
-                setUpdateError("Something went wrong.");
-            }
+            setUpdateError(err instanceof Error ? err.message : "Something went wrong.");
         }
     };
 
