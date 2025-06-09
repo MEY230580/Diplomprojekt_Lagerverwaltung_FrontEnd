@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import Sidebar from "@/app/components/Sidebar";
 import { getAuthHeader } from "@/app/services/getAuthHeader";
+import { getIdTokenResult } from "firebase/auth";
+import { auth } from "@/app/services/firebase";
 
 interface Product {
     id: number;
@@ -65,7 +67,23 @@ export default function ProductDetails() {
 
     const handleDelete = async () => {
         try {
-            const headers = await getAuthHeader();
+            const user = auth.currentUser;
+            if (!user) {
+                throw new Error("Kein Benutzer eingeloggt.");
+            }
+
+            // 🔍 UID & Claims anzeigen
+            const tokenResult = await getIdTokenResult(user, true);
+            console.log("🔑 Token Claims:", tokenResult.claims);
+            console.log("🧾 Token UID:", tokenResult.claims.user_id || tokenResult.claims.uid);
+
+            const token = await user.getIdToken(true);
+            const headers = {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            };
+
+            console.log("📤 DELETE-Header:", headers);
 
             const response = await fetch(`http://localhost/api/Products/${id}`, {
                 method: "DELETE",
