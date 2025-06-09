@@ -19,12 +19,15 @@ import {
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/Sidebar";
 import { useTheme } from "@/app/components/Dark Mode/ThemeContext";
+import { getAuthHeader } from "@/app/services/getAuthHeader";
 
-// Define the Product type
 type Product = {
-    id: number;  // Added 'id' to be able to send in POST
+    id: string;
     name: string;
-    stock: number;
+    unit: string | null;
+    quantity: number;
+    minimumStock: number;
+    warehouseId: string;
 };
 
 const modalStyle = {
@@ -45,72 +48,73 @@ export default function Page() {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
-
-    // New states for Restock Request
     const [restockModalOpen, setRestockModalOpen] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
-    const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+    const [selectedProductId, setSelectedProductId] = useState<string | "">("");
 
     const handleLogout = () => {
-        localStorage.removeItem("authToken");
         router.push("/login");
     };
 
-    const handleOpenModal = () => {
-        setModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setModalOpen(false);
-    };
-
-    const handleOpenRestockModal = () => {
-        setRestockModalOpen(true);
-    };
-
+    const handleOpenModal = () => setModalOpen(true);
+    const handleCloseModal = () => setModalOpen(false);
+    const handleOpenRestockModal = () => setRestockModalOpen(true);
     const handleCloseRestockModal = () => {
         setRestockModalOpen(false);
-        setSelectedProductId(null);
+        setSelectedProductId("");
     };
 
-    const fetchProducts = () => {
-        fetch("http://localhost/api/Products")
-            .then(res => res.json())
-            .then(data => setProducts(data))
-            .catch(err => console.error("Error fetching products:", err));
+    const fetchProducts = async () => {
+        try {
+            const headers = await getAuthHeader();
+            const res = await fetch("http://localhost/api/Products", { headers });
+            const data = await res.json();
+            setProducts(data);
+        } catch (err) {
+            console.error("❌ Fehler beim Laden der Produkte:", err);
+        }
     };
 
-    const handleRestockRequest = () => {
-        if (selectedProductId !== null) {
-            fetch("http://localhost/api/RestockQueue/request", {
+    const handleRestockRequest = async () => {
+        if (!selectedProductId) return;
+
+        try {
+            const headers = await getAuthHeader();
+
+            const res = await fetch("http://localhost/api/RestockQueue/request", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers,
                 body: JSON.stringify({ productId: selectedProductId }),
-            })
-                .then(response => {
-                    if (!response.ok) throw new Error("Failed to request restock");
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Restock requested:", data);
-                    handleCloseRestockModal();
-                    alert("Restock requested successfully!");
-                })
-                .catch(err => {
-                    console.error("Error requesting restock:", err);
-                    alert("Failed to request restock.");
-                });
+            });
+
+            if (!res.ok) throw new Error(`Fehler beim Anfordern: ${res.status}`);
+
+            const data = await res.json();
+            console.log("✅ Restock angefragt:", data);
+            alert("Restock wurde erfolgreich angefordert.");
+            handleCloseRestockModal();
+        } catch (err) {
+            console.error("❌ Fehler beim Restock-Request:", err);
+            alert("Fehler beim Anfordern des Restocks.");
         }
     };
 
     useEffect(() => {
         if (modalOpen) {
-            fetch("http://localhost/api/Products/low-stock")
-                .then(res => res.json())
-                .then(data => setLowStockProducts(data))
-                .catch(err => console.error("Error fetching low stock products:", err));
+            const fetchLowStock = async () => {
+                try {
+                    const headers = await getAuthHeader();
+                    const res = await fetch("http://localhost/api/Products/low-stock", { headers });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const text = await res.text();
+                    const data = text ? JSON.parse(text) : [];
+                    setLowStockProducts(data);
+                } catch (err) {
+                    console.error("❌ Fehler beim Laden von Low-Stock:", err);
+                    setLowStockProducts([]);
+                }
+            };
+            fetchLowStock();
         }
     }, [modalOpen]);
 
@@ -142,7 +146,7 @@ export default function Page() {
                 </CardContent>
             </Card>
 
-            {/* Theme Switcher Card */}
+            {/* Theme Switcher */}
             <Card sx={{ maxWidth: 600, margin: "auto", mt: 4, padding: 2 }}>
                 <CardContent>
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -154,17 +158,10 @@ export default function Page() {
                 </CardContent>
             </Card>
 
-            {/* Low Stock Products Card */}
+            {/* Low Stock Button */}
             <Card sx={{ maxWidth: 600, margin: "auto", mt: 4, padding: 2, height: 150 }}>
                 <CardContent sx={{ height: "100%" }}>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            height: "100%",
-                        }}
-                    >
+                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                         <Button
                             variant="contained"
                             onClick={handleOpenModal}
@@ -180,17 +177,10 @@ export default function Page() {
                 </CardContent>
             </Card>
 
-            {/* NEW Request Restock Card */}
+            {/* Request Restock Button */}
             <Card sx={{ maxWidth: 600, margin: "auto", mt: 4, padding: 2, height: 150 }}>
                 <CardContent sx={{ height: "100%" }}>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            height: "100%",
-                        }}
-                    >
+                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
                         <Button
                             variant="contained"
                             onClick={handleOpenRestockModal}
@@ -206,7 +196,7 @@ export default function Page() {
                 </CardContent>
             </Card>
 
-            {/* Modal for Low Stock Products */}
+            {/* Modal: Low Stock Products */}
             <Modal open={modalOpen} onClose={handleCloseModal}>
                 <Box sx={modalStyle}>
                     <Typography variant="h6" gutterBottom>
@@ -214,11 +204,11 @@ export default function Page() {
                     </Typography>
                     {lowStockProducts.length > 0 ? (
                         <List>
-                            {lowStockProducts.map((product, index) => (
-                                <ListItem key={index}>
+                            {lowStockProducts.map((product) => (
+                                <ListItem key={product.id}>
                                     <ListItemText
                                         primary={product.name}
-                                        secondary={`Stock: ${product.stock}`}
+                                        secondary={`Quantity: ${product.quantity} / Min: ${product.minimumStock}`}
                                     />
                                 </ListItem>
                             ))}
@@ -229,7 +219,7 @@ export default function Page() {
                 </Box>
             </Modal>
 
-            {/* Modal for Requesting Restock */}
+            {/* Modal: Request Restock */}
             <Modal open={restockModalOpen} onClose={handleCloseRestockModal}>
                 <Box sx={modalStyle}>
                     <Typography variant="h6" gutterBottom>
@@ -239,9 +229,9 @@ export default function Page() {
                         <InputLabel id="select-product-label">Select Product</InputLabel>
                         <Select
                             labelId="select-product-label"
-                            value={selectedProductId ?? ""}  // Ensure it defaults to an empty string if null
+                            value={selectedProductId}
                             label="Select Product"
-                            onChange={(e) => setSelectedProductId(Number(e.target.value))}
+                            onChange={(e) => setSelectedProductId(e.target.value)}
                         >
                             {products.map((product) => (
                                 <MenuItem key={product.id} value={product.id}>
@@ -255,7 +245,7 @@ export default function Page() {
                         color="primary"
                         sx={{ mt: 3 }}
                         onClick={handleRestockRequest}
-                        disabled={selectedProductId === null}
+                        disabled={!selectedProductId}
                     >
                         Submit Request
                     </Button>
