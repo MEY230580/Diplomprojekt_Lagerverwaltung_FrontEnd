@@ -15,15 +15,7 @@ const reportApiMap: Record<string, string> = {
     "restocks-per-period": "http://localhost/api/Reports/restocks-by-period",
     "stock-summary": "http://localhost/api/Reports/stock-summary",
     "top-restock-products": "http://localhost/api/Reports/top-restock-products",
-    "get-movements": "http://localhost/api/Movements",
-    "get-movements-all-warehouses": "http://localhost/api/Movements/all-warehouses",
-    "movements-inventory-report": "http://localhost/api/Movements/inventory-report",
-    "restock-all": "http://localhost/api/restock/all",
-    "restock-pending": "http://localhost/api/restock/pending",
-    "restock-request": "http://localhost/api/restock/request",
-    // "movement-one-product": `http://localhost:5001/api/Movements/${id}`
-    // "restock-product-process": `http://localhost/api/restock/${id}/process`
-    // "restock-one-product": `http://localhost/api/restock/${id}`,
+    "get-movements": "http://localhost/api/movements",
 };
 
 export default function ReportPage() {

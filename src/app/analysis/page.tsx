@@ -33,21 +33,6 @@ export default function Page() {
                 <Button variant="contained" onClick={() => navigateToReport("get-movements")}>
                     Movements
                 </Button>
-                <Button variant="contained" onClick={() => navigateToReport("get-movements-all-warehouses")}>
-                    Movements in all warehouses
-                </Button>
-                <Button variant="contained" onClick={() => navigateToReport("movements-inventory-report")}>
-                    Inventory Report
-                </Button>
-                <Button variant="contained" onClick={() => navigateToReport("restock-all")}>
-                    Restock of all products
-                </Button>
-                <Button variant="contained" onClick={() => navigateToReport("restock-pending")}>
-                    Restock of products pending
-                </Button>
-                <Button variant="contained" onClick={() => navigateToReport("restock-request")}>
-                    Request of restocks
-                </Button>
             </Box>
         </>
     );

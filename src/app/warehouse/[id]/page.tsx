@@ -59,6 +59,8 @@ export default function LocationChange() {
     const [submitError, setSubmitError] = React.useState<string | null>(null);
     const [moveError, setMoveError] = React.useState<string | null>(null);
     const [updateError, setUpdateError] = React.useState<string | null>(null);
+    const [newMinimumStock, setNewMinimumStock] = React.useState<number | "">("");
+
 
     // 🔍 Debug: Firebase Token Claims anzeigen
     React.useEffect(() => {
@@ -107,6 +109,7 @@ export default function LocationChange() {
                 body: JSON.stringify({
                     name: newName,
                     quantity: Number(newQuantity),
+                    minimumStock: Number(newMinimumStock), // ✅ hinzugefügt
                     warehouseId: id,
                 }),
             });
@@ -116,11 +119,13 @@ export default function LocationChange() {
             setOpenDialog(false);
             setNewName("");
             setNewQuantity("");
+            setNewMinimumStock(""); // ✅ reset
             window.location.reload();
         } catch (err) {
             setSubmitError(err instanceof Error ? err.message : "Something went wrong.");
         }
     };
+
 
     const submitMove = async () => {
         const selectedProduct = products.find((p) => p.id === selectedProductId);
@@ -302,6 +307,13 @@ export default function LocationChange() {
                         onChange={(e) => setNewQuantity(Number(e.target.value))}
                         fullWidth
                     />
+                    <TextField
+                        label="Minimum Stock"
+                        type="number"
+                        value={newMinimumStock}
+                        onChange={(e) => setNewMinimumStock(Number(e.target.value))}
+                        fullWidth
+                    />
                     {submitError && (
                         <Typography color="error" variant="body2">
                             ⚠ {submitError}
@@ -310,7 +322,11 @@ export default function LocationChange() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleAddProduct} disabled={!newName || !newQuantity}>
+                    <Button
+                        variant="contained"
+                        onClick={handleAddProduct}
+                        disabled={!newName || newQuantity === "" || newMinimumStock === ""}
+                    >
                         Submit
                     </Button>
                 </DialogActions>
@@ -318,7 +334,7 @@ export default function LocationChange() {
 
             {/* Move Product Dialog */}
             <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)}>
-                <DialogTitle>Move Product</DialogTitle>
+                <DialogTitle>Move Product to Other Warehouse</DialogTitle>
                 <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
                     <FormControl fullWidth>
                         <InputLabel>Select Product</InputLabel>
@@ -352,7 +368,7 @@ export default function LocationChange() {
                     <Button
                         variant="contained"
                         onClick={submitMove}
-                        disabled={!selectedProductId || !moveQuantity || moveQuantity <= 0}
+                        disabled={!selectedProductId || moveQuantity === ""}
                     >
                         Move
                     </Button>

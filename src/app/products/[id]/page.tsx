@@ -12,6 +12,7 @@ import {
     Stack,
     Modal,
     Box,
+    Alert,
 } from "@mui/material";
 import Sidebar from "@/app/components/Sidebar";
 import { getAuthHeader } from "@/app/services/getAuthHeader";
@@ -72,18 +73,14 @@ export default function ProductDetails() {
                 throw new Error("Kein Benutzer eingeloggt.");
             }
 
-            // 🔍 UID & Claims anzeigen
             const tokenResult = await getIdTokenResult(user, true);
             console.log("🔑 Token Claims:", tokenResult.claims);
-            console.log("🧾 Token UID:", tokenResult.claims.user_id || tokenResult.claims.uid);
 
             const token = await user.getIdToken(true);
             const headers = {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
             };
-
-            console.log("📤 DELETE-Header:", headers);
 
             const response = await fetch(`http://localhost/api/Products/${id}`, {
                 method: "DELETE",
@@ -166,12 +163,23 @@ export default function ProductDetails() {
                     <Typography variant="h4" gutterBottom>
                         {product?.name}
                     </Typography>
+
                     <Typography variant="body1">
                         Quantity: {product?.quantity}
                     </Typography>
-                    <Typography variant="body1">
-                        Location: {product?.location}
-                    </Typography>
+
+                    {typeof product?.minimumStock === "number" && (
+                        <Typography variant="body1">
+                            Minimum Stock: {product.minimumStock}
+                        </Typography>
+                    )}
+
+                    {product && product.minimumStock !== undefined &&
+                        product.quantity < product.minimumStock && (
+                            <Alert severity="warning" sx={{ mt: 2 }}>
+                                Der Lagerbestand liegt unter dem Mindestbestand!
+                            </Alert>
+                        )}
 
                     <Stack spacing={2} mt={3}>
                         <Button
