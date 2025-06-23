@@ -20,12 +20,15 @@ import { getIdTokenResult } from "firebase/auth";
 import { auth } from "@/app/services/firebase";
 
 interface Product {
-    id: number;
+    id: string;
     name: string;
     quantity: number;
-    location: string;
+    location?: string;
     minimumStock?: number;
     unit?: string;
+    version: number; // ✅ Wichtig für Concurrency
+    warehouseId?: string;
+    warehouseName?: string;
 }
 
 export default function ProductDetails() {
@@ -53,7 +56,7 @@ export default function ProductDetails() {
                     throw new Error(`Fehler beim Laden: ${response.status} - ${text}`);
                 }
 
-                const data = await response.json();
+                const data: Product = await response.json();
                 setProduct(data);
             } catch (err) {
                 console.error("❌ Fehler beim Produktabruf:", err);
@@ -69,9 +72,7 @@ export default function ProductDetails() {
     const handleDelete = async () => {
         try {
             const user = auth.currentUser;
-            if (!user) {
-                throw new Error("Kein Benutzer eingeloggt.");
-            }
+            if (!user) throw new Error("Kein Benutzer eingeloggt.");
 
             const tokenResult = await getIdTokenResult(user, true);
             console.log("🔑 Token Claims:", tokenResult.claims);
@@ -111,21 +112,19 @@ export default function ProductDetails() {
         const updatedProduct = {
             name: product.name,
             quantity: product.quantity - takeAmount,
-            minimumStock: product.minimumStock || 0,
-            unit: product.unit || "units",
+            minimumStock: product.minimumStock ?? 0,
+            unit: product.unit ?? "units",
+            version: product.version, // ✅ mitgeben
         };
 
         try {
             const headers = await getAuthHeader();
 
-            const response = await fetch(
-                `http://localhost/api/Products/update-product?productId=${id}`,
-                {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify(updatedProduct),
-                }
-            );
+            const response = await fetch(`http://localhost/api/Products/${id}`, {
+                method: "PUT",
+                headers,
+                body: JSON.stringify(updatedProduct),
+            });
 
             if (!response.ok) {
                 const text = await response.text();
@@ -133,9 +132,18 @@ export default function ProductDetails() {
             }
 
             alert("Produkt erfolgreich aktualisiert.");
+
+            // version inkrementieren, da Update erfolgreich war (typischerweise +1)
             setProduct((prev) =>
-                prev ? { ...prev, quantity: updatedProduct.quantity } : null
+                prev
+                    ? {
+                        ...prev,
+                        quantity: updatedProduct.quantity,
+                        version: prev.version + 1,
+                    }
+                    : null
             );
+
             setTakeAmount(0);
         } catch (err) {
             console.error("❌ Fehler beim Aktualisieren:", err);
@@ -164,9 +172,7 @@ export default function ProductDetails() {
                         {product?.name}
                     </Typography>
 
-                    <Typography variant="body1">
-                        Quantity: {product?.quantity}
-                    </Typography>
+                    <Typography variant="body1">Quantity: {product?.quantity}</Typography>
 
                     {typeof product?.minimumStock === "number" && (
                         <Typography variant="body1">
@@ -190,11 +196,7 @@ export default function ProductDetails() {
                             Take Out Product
                         </Button>
 
-                        <Button
-                            onClick={handleDelete}
-                            variant="contained"
-                            color="error"
-                        >
+                        <Button onClick={handleDelete} variant="contained" color="error">
                             Delete Product
                         </Button>
                     </Stack>
@@ -239,9 +241,7 @@ export default function ProductDetails() {
                             }}
                             variant="contained"
                             color="primary"
-                            disabled={
-                                takeAmount <= 0 || takeAmount > (product?.quantity ?? 0)
-                            }
+                            disabled={takeAmount <= 0 || takeAmount > (product?.quantity ?? 0)}
                         >
                             Confirm
                         </Button>

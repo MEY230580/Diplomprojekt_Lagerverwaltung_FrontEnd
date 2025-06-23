@@ -215,7 +215,7 @@ export default function Page() {
                                     borderRadius: 2,
                                 }}
                                 secondaryAction={
-                                    userRole === "admin" && (
+                                    userRole === "manager" && (
                                         <>
                                             <IconButton
                                                 edge="end"
@@ -266,7 +266,7 @@ export default function Page() {
                         </Box>
                     )}
 
-                    {userRole === "admin" && (
+                    {userRole === "manager" && (
                         <Button sx={{ mt: 4 }} variant="contained" onClick={() => setOpenAdd(true)}>
                             Neues Warehouse hinzufügen
                         </Button>

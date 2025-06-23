@@ -34,16 +34,18 @@ interface Product {
     warehouseId: string;
     warehouseName: string;
     unit: string | null;
+    version: number; // 👈 Add this
 }
-
-const WAREHOUSE_A_ID = "11111111-1111-1111-1111-111111111111";
-const WAREHOUSE_B_ID = "22222222-2222-2222-2222-222222222222";
 
 export default function LocationChange() {
     const { id } = useParams();
     const router = useRouter();
     const apiUrl = `http://localhost/api/Warehouse/products/${id}`;
-    const { data, loading, error } = useFetch(apiUrl);
+    const { data: rawData, loading, error } = useFetch(apiUrl);
+
+    // State für Warehouses zum Move-Ziel
+    const [warehouses, setWarehouses] = React.useState<{ id: string; name: string }[]>([]);
+    const [selectedDestinationWarehouseId, setSelectedDestinationWarehouseId] = React.useState<string>("");
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [sortBy, setSortBy] = React.useState("name");
@@ -61,8 +63,6 @@ export default function LocationChange() {
     const [updateError, setUpdateError] = React.useState<string | null>(null);
     const [newMinimumStock, setNewMinimumStock] = React.useState<number | "">("");
 
-
-    // 🔍 Debug: Firebase Token Claims anzeigen
     React.useEffect(() => {
         const checkUserRole = async () => {
             const user = auth.currentUser;
@@ -74,7 +74,22 @@ export default function LocationChange() {
         checkUserRole();
     }, []);
 
-    const products = (data as Product[]) || [];
+    // Warehouses laden für Move-Ziel Auswahl
+    React.useEffect(() => {
+        const fetchWarehouses = async () => {
+            try {
+                const res = await fetch("http://localhost/api/Warehouse");
+                if (!res.ok) throw new Error("Failed to fetch warehouses");
+                const data = await res.json();
+                setWarehouses(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchWarehouses();
+    }, []);
+
+    const products = (rawData as Product[]) || [];
     const warehouseName = products.length > 0 ? products[0].warehouseName : "Unknown Warehouse";
     const filteredProducts = products.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -84,7 +99,6 @@ export default function LocationChange() {
         if (sortBy === "quantity") return b.quantity - a.quantity;
         return 0;
     });
-    const destinationWarehouseId = id === WAREHOUSE_A_ID ? WAREHOUSE_B_ID : WAREHOUSE_A_ID;
 
     const handleAddProduct = async () => {
         setSubmitError(null);
@@ -95,8 +109,15 @@ export default function LocationChange() {
                 method: "GET",
                 headers,
             });
-            const roleData = await roleRes.json();
 
+            const roleContentType = roleRes.headers.get("content-type");
+            if (!roleContentType?.includes("application/json")) {
+                const roleText = await roleRes.text();
+                console.error("Unerwartete Rollenantwort:", roleText);
+                throw new Error("Fehler beim Abrufen der Benutzerrolle.");
+            }
+
+            const roleData = await roleRes.json();
             const userRole = (roleData.role || "").toLowerCase();
             if (userRole !== "manager") {
                 setSubmitError("Only managers can add products.");
@@ -109,28 +130,46 @@ export default function LocationChange() {
                 body: JSON.stringify({
                     name: newName,
                     quantity: Number(newQuantity),
-                    minimumStock: Number(newMinimumStock), // ✅ hinzugefügt
+                    minimumStock: Number(newMinimumStock),
                     warehouseId: id,
+                    unit: "units",
                 }),
             });
 
-            if (!res.ok) throw new Error("Failed to add product");
+            const contentType = res.headers.get("content-type");
 
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("❌ Fehlerantwort beim Hinzufügen:", errorText);
+                throw new Error("Failed to add product.");
+            }
+
+            if (!contentType?.includes("application/json")) {
+                const rawText = await res.text();
+                console.warn("⚠️ Antwort ist kein JSON:", rawText);
+                throw new Error("Serverantwort ist kein gültiges JSON.");
+            }
+
+            await res.json();
             setOpenDialog(false);
             setNewName("");
             setNewQuantity("");
-            setNewMinimumStock(""); // ✅ reset
+            setNewMinimumStock("");
             window.location.reload();
         } catch (err) {
             setSubmitError(err instanceof Error ? err.message : "Something went wrong.");
         }
     };
 
-
     const submitMove = async () => {
         const selectedProduct = products.find((p) => p.id === selectedProductId);
         if (!selectedProduct || moveQuantity === "" || moveQuantity <= 0) {
             setMoveError("Please select a product and enter a valid quantity.");
+            return;
+        }
+
+        if (!selectedDestinationWarehouseId) {
+            setMoveError("Please select a destination warehouse.");
             return;
         }
 
@@ -150,7 +189,7 @@ export default function LocationChange() {
                     productId: selectedProduct.id,
                     productName: selectedProduct.name,
                     fromWarehouseId: id,
-                    toWarehouseId: destinationWarehouseId,
+                    toWarehouseId: selectedDestinationWarehouseId,
                     quantity: moveQuantity,
                     movementsDate: new Date().toISOString(),
                 }),
@@ -170,6 +209,7 @@ export default function LocationChange() {
             setOpenMoveDialog(false);
             setSelectedProductId("");
             setMoveQuantity("");
+            setSelectedDestinationWarehouseId("");
             window.location.reload();
         } catch (err) {
             setMoveError(err instanceof Error ? err.message : "Something went wrong during the move.");
@@ -177,35 +217,42 @@ export default function LocationChange() {
     };
 
     const handleUpdateProduct = async () => {
-        const product = products.find((p) => p.id === selectedUpdateProductId);
-        if (!product || updateQuantity === "" || updateQuantity < 0) {
-            setUpdateError("Please select a product and a valid quantity.");
-            return;
-        }
-
-        const newTotalQuantity = product.quantity + Number(updateQuantity);
-        if (newTotalQuantity < 0) {
-            setUpdateError("Quantity cannot be less than 0.");
-            return;
-        }
-
-        const updatedProduct = {
-            name: product.name,
-            quantity: newTotalQuantity,
-            minimumStock: product.minimumStock,
-            unit: product.unit || "units",
-        };
+        const headers = await getAuthHeader();
+        headers["Content-Type"] = "application/json";
 
         try {
-            const headers = await getAuthHeader();
+            const productRes = await fetch(`http://localhost/api/Products/${selectedUpdateProductId}`, {
+                headers,
+            });
 
-            const res = await fetch(`http://localhost/api/Products/update-product?productId=${selectedUpdateProductId}`, {
-                method: "POST",
+            if (!productRes.ok) throw new Error("Failed to fetch latest product version.");
+
+            const latestProduct: Product = await productRes.json();
+
+            const newTotalQuantity = latestProduct.quantity + Number(updateQuantity);
+            if (newTotalQuantity < 0) {
+                setUpdateError("Quantity cannot be less than 0.");
+                return;
+            }
+
+            const updatedProduct = {
+                name: latestProduct.name,
+                quantity: newTotalQuantity,
+                minimumStock: latestProduct.minimumStock,
+                unit: latestProduct.unit || "units",
+                version: latestProduct.version, // ✅ fresh version
+            };
+
+            const res = await fetch(`http://localhost/api/Products/${selectedUpdateProductId}`, {
+                method: "PUT",
                 headers,
                 body: JSON.stringify(updatedProduct),
             });
 
-            if (!res.ok) throw new Error("Failed to update product.");
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to update product: ${errorText}`);
+            }
 
             setOpenUpdateDialog(false);
             setSelectedUpdateProductId("");
@@ -284,139 +331,153 @@ export default function LocationChange() {
                                 </Grid>
                             ))
                         ) : (
-                            <Typography variant="body1">No products available</Typography>
+                            <Typography>No products found</Typography>
                         )}
                     </Grid>
                 </Box>
+
+                {/* Dialog zum Hinzufügen neuer Produkte */}
+                <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+                    <DialogTitle>Add New Product</DialogTitle>
+                    <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                        <TextField
+                            label="Name"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Quantity"
+                            type="number"
+                            value={newQuantity}
+                            onChange={(e) => setNewQuantity(Number(e.target.value))}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Minimum Stock"
+                            type="number"
+                            value={newMinimumStock}
+                            onChange={(e) => setNewMinimumStock(Number(e.target.value))}
+                            fullWidth
+                        />
+                        {submitError && (
+                            <Typography color="error" variant="body2">
+                                ⚠ {submitError}
+                            </Typography>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                        <Button variant="contained" onClick={handleAddProduct} disabled={!newName || !newQuantity || !newMinimumStock}>
+                            Add
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Dialog für Produkt-Update */}
+                <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
+                    <DialogTitle>Update Product Quantity</DialogTitle>
+                    <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                        <FormControl fullWidth>
+                            <InputLabel>Select Product</InputLabel>
+                            <Select
+                                value={selectedUpdateProductId}
+                                label="Select Product"
+                                onChange={(e) => setSelectedUpdateProductId(e.target.value)}
+                            >
+                                {products.map((product) => (
+                                    <MenuItem key={product.id} value={product.id}>
+                                        {product.name} (Available: {product.quantity})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            label="Quantity to Add/Remove"
+                            type="number"
+                            value={updateQuantity}
+                            onChange={(e) => setUpdateQuantity(Number(e.target.value))}
+                            fullWidth
+                        />
+                        {updateError && (
+                            <Typography color="error" variant="body2">
+                                ⚠ {updateError}
+                            </Typography>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenUpdateDialog(false)}>Cancel</Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleUpdateProduct}
+                            disabled={!selectedUpdateProductId || updateQuantity === ""}
+                        >
+                            Update
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Dialog für Product Move mit Dropdown für Ziel-Warehouse */}
+                <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)}>
+                    <DialogTitle>Move Product to Other Warehouse</DialogTitle>
+                    <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                        <FormControl fullWidth>
+                            <InputLabel>Select Product</InputLabel>
+                            <Select
+                                value={selectedProductId}
+                                label="Select Product"
+                                onChange={(e) => setSelectedProductId(e.target.value)}
+                            >
+                                {products.map((product) => (
+                                    <MenuItem key={product.id} value={product.id}>
+                                        {product.name} (Available: {product.quantity})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl fullWidth>
+                            <InputLabel>Destination Warehouse</InputLabel>
+                            <Select
+                                value={selectedDestinationWarehouseId}
+                                label="Destination Warehouse"
+                                onChange={(e) => setSelectedDestinationWarehouseId(e.target.value)}
+                            >
+                                {warehouses
+                                    .filter((w) => w.id !== id) // Ziel darf nicht das gleiche Warehouse sein
+                                    .map((warehouse) => (
+                                        <MenuItem key={warehouse.id} value={warehouse.id}>
+                                            {warehouse.name}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            label="Quantity to Move"
+                            type="number"
+                            value={moveQuantity}
+                            onChange={(e) => setMoveQuantity(Number(e.target.value))}
+                            fullWidth
+                        />
+                        {moveError && (
+                            <Typography color="error" variant="body2">
+                                ⚠ {moveError}
+                            </Typography>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenMoveDialog(false)}>Cancel</Button>
+                        <Button
+                            variant="contained"
+                            onClick={submitMove}
+                            disabled={!selectedProductId || moveQuantity === "" || !selectedDestinationWarehouseId}
+                        >
+                            Move
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Container>
-
-            {/* Add Product Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add New Product</DialogTitle>
-                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                    <TextField
-                        label="Product Name"
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        fullWidth
-                    />
-                    <TextField
-                        label="Quantity"
-                        type="number"
-                        value={newQuantity}
-                        onChange={(e) => setNewQuantity(Number(e.target.value))}
-                        fullWidth
-                    />
-                    <TextField
-                        label="Minimum Stock"
-                        type="number"
-                        value={newMinimumStock}
-                        onChange={(e) => setNewMinimumStock(Number(e.target.value))}
-                        fullWidth
-                    />
-                    {submitError && (
-                        <Typography color="error" variant="body2">
-                            ⚠ {submitError}
-                        </Typography>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleAddProduct}
-                        disabled={!newName || newQuantity === "" || newMinimumStock === ""}
-                    >
-                        Submit
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Move Product Dialog */}
-            <Dialog open={openMoveDialog} onClose={() => setOpenMoveDialog(false)}>
-                <DialogTitle>Move Product to Other Warehouse</DialogTitle>
-                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                    <FormControl fullWidth>
-                        <InputLabel>Select Product</InputLabel>
-                        <Select
-                            value={selectedProductId}
-                            label="Select Product"
-                            onChange={(e) => setSelectedProductId(e.target.value)}
-                        >
-                            {products.map((product) => (
-                                <MenuItem key={product.id} value={product.id}>
-                                    {product.name} (Available: {product.quantity})
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        label="Quantity to Move"
-                        type="number"
-                        value={moveQuantity}
-                        onChange={(e) => setMoveQuantity(Number(e.target.value))}
-                        fullWidth
-                    />
-                    {moveError && (
-                        <Typography color="error" variant="body2">
-                            ⚠ {moveError}
-                        </Typography>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenMoveDialog(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        onClick={submitMove}
-                        disabled={!selectedProductId || moveQuantity === ""}
-                    >
-                        Move
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Update Product Dialog */}
-            <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
-                <DialogTitle>Update Product Quantity</DialogTitle>
-                <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                    <FormControl fullWidth>
-                        <InputLabel>Select Product</InputLabel>
-                        <Select
-                            value={selectedUpdateProductId}
-                            label="Select Product"
-                            onChange={(e) => setSelectedUpdateProductId(e.target.value)}
-                        >
-                            {products.map((product) => (
-                                <MenuItem key={product.id} value={product.id}>
-                                    {product.name} (Current: {product.quantity})
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        label="Quantity to Add"
-                        type="number"
-                        value={updateQuantity}
-                        onChange={(e) => setUpdateQuantity(Number(e.target.value))}
-                        fullWidth
-                    />
-                    {updateError && (
-                        <Typography color="error" variant="body2">
-                            ⚠ {updateError}
-                        </Typography>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenUpdateDialog(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleUpdateProduct}
-                        disabled={!selectedUpdateProductId || updateQuantity === ""}
-                    >
-                        Update
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </>
     );
 }
