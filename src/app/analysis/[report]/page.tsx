@@ -1,22 +1,36 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import {
+    Typography,
+    CircularProgress,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+} from "@mui/material";
+import { apiRequest } from "@/app/services/api";
 
-// Define an interface based on your API response structure
+interface Product {
+    id: string;
+    name: string;
+    quantityAvailable: number;
+    minimumQuantity: number;
+    warehouseId: string;
+    restockedQuantity: number;
+}
+
+interface Restock {
+    date: string;
+    product: Product;
+}
+
 interface ReportData {
     [key: string]: string | number | boolean | null | object | object[];
 }
-
-// API endpoints mapping
-const reportApiMap: Record<string, string> = {
-    "AuditLogs": "http://localhost/api/audit-logs",
-    "movements-per-day": "http://localhost/api/Reports/movements-per-day",
-    "restocks-per-period": "http://localhost/api/Reports/restocks-by-period",
-    "stock-summary": "http://localhost/api/Reports/stock-summary",
-    "top-restock-products": "http://localhost/api/Reports/top-restock-products",
-    "get-movements": "http://localhost/api/movements",
-};
 
 export default function ReportPage() {
     const params = useParams();
@@ -29,27 +43,66 @@ export default function ReportPage() {
     useEffect(() => {
         if (!report) return;
 
-        let apiUrl = reportApiMap[report];
-        if (!apiUrl) {
-            setError("Invalid [report] type.");
-            setLoading(false);
-            return;
-        }
-
-        if (report === "restocks-per-period") {
-            apiUrl += "?period=month";
-        }
+        const checkUserRole = async (): Promise<boolean> => {
+            try {
+                const result = await apiRequest("roles/user-role");
+                console.log("🔐 User Role Response:", result);
+                return result?.role?.toLowerCase() === "manager";
+            } catch (err) {
+                console.error("❌ Fehler beim User-Role-Check:", err);
+                throw new Error("User role check failed");
+            }
+        };
 
         const fetchData = async () => {
-            try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error("Failed to fetch data");
-                const result: ReportData = await response.json();
+            if (!report) return;
 
+            const validReports: Record<string, string> = {
+                "AuditLogs": "audit-logs",
+                "movements-per-day": "Reports/movements-per-day",
+                "restocks-per-period": "Reports/restocks-by-period",
+                "stock-summary": "Reports/stock-summary",
+                "top-restock-products": "Reports/top-restock-products",
+                "get-movements": "movements",
+            };
+
+            const endpoint = validReports[report];
+            if (!endpoint) {
+                setError("Invalid [report] type.");
+                setLoading(false);
+                return;
+            }
+
+            if (report === "AuditLogs") {
+                try {
+                    const isManager = await checkUserRole();
+                    if (!isManager) {
+                        setError("Access denied: Only managers can view audit logs.");
+                        setLoading(false);
+                        return;
+                    }
+                } catch (err) {
+                    setError((err as Error).message);
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            try {
+                const fullEndpoint =
+                    report === "restocks-per-period"
+                        ? `${endpoint}?period=y`
+                        : endpoint;
+
+                const result = await apiRequest(fullEndpoint);
                 const extractedData = Array.isArray(result) ? result : [];
 
                 const filteredData = extractedData.map((item) =>
-                    Object.fromEntries(Object.entries(item).filter(([key]) => !["id", "Id", "_id", "$id"].includes(key.toLowerCase())))
+                    Object.fromEntries(
+                        Object.entries(item).filter(
+                            ([key]) => !["id", "Id", "_id", "$id"].includes(key.toLowerCase())
+                        )
+                    )
                 );
 
                 setData(filteredData as ReportData[]);
@@ -85,9 +138,11 @@ export default function ReportPage() {
                         <TableRow>
                             {data.length > 0 &&
                                 Object.keys(data[0])
-                                    .filter(column => !["id", "Id", "_id"].includes(column.toLowerCase()))
+                                    .filter((column) => !["id", "Id", "_id"].includes(column.toLowerCase()))
                                     .map((column) => (
-                                        <TableCell key={column}><strong>{column.toUpperCase()}</strong></TableCell>
+                                        <TableCell key={column}>
+                                            <strong>{column.toUpperCase()}</strong>
+                                        </TableCell>
                                     ))}
                         </TableRow>
                     </TableHead>
@@ -96,11 +151,34 @@ export default function ReportPage() {
                             <TableRow key={index}>
                                 {Object.entries(row)
                                     .filter(([key]) => !["id", "Id", "_id"].includes(key.toLowerCase()))
-                                    .map(([key, value]) => (
-                                        <TableCell key={key}>
-                                            <strong>{key}:</strong> {typeof value === "object" && value !== null ? JSON.stringify(value) : value?.toString() || "N/A"}
-                                        </TableCell>
-                                    ))}
+                                    .map(([key, value]) => {
+                                        if (
+                                            report === "restocks-per-period" &&
+                                            key.toLowerCase() === "restocks" &&
+                                            Array.isArray(value)
+                                        ) {
+                                            return (
+                                                <TableCell key={key} sx={{ whiteSpace: "normal", maxWidth: 400 }}>
+                                                    <ul style={{ paddingLeft: "1rem", margin: 0 }}>
+                                                        {(value as Restock[]).map((restock, i) => (
+                                                            <li key={i}>
+                                                                {restock.date}: {restock.product.name} — Menge:{" "}
+                                                                {restock.product.restockedQuantity}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </TableCell>
+                                            );
+                                        }
+
+                                        return (
+                                            <TableCell key={key} sx={{ whiteSpace: "normal" }}>
+                                                {typeof value === "object" && value !== null
+                                                    ? JSON.stringify(value)
+                                                    : value?.toString() || "N/A"}
+                                            </TableCell>
+                                        );
+                                    })}
                             </TableRow>
                         ))}
                     </TableBody>
