@@ -1,4 +1,3 @@
-// api.ts
 import { auth } from "./firebase";
 
 export async function apiRequest(endpoint: string, method = "GET", body?: object) {
@@ -18,6 +17,17 @@ export async function apiRequest(endpoint: string, method = "GET", body?: object
 
     if (!res.ok) {
         throw new Error(`Fehler beim Aufruf: ${res.statusText}`);
+    }
+
+    // 🛠️ Wenn 204: kein Content zum Parsen
+    if (res.status === 204) {
+        return null;
+    }
+
+    // 🛠️ Falls kein Content-Type: application/json, nicht versuchen zu parsen
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        return null;
     }
 
     return await res.json();
